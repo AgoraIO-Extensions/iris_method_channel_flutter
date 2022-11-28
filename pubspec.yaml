@@ -1,7 +1,7 @@
 name: iris_method_channel
 description: >-
     iris_method_channel is a method channel that communicate between C/C++(iris) and dart, which is used by agora_rtc_engine.
-version: 1.0.0
+version: 0.1.0
 homepage:
 
 environment:
