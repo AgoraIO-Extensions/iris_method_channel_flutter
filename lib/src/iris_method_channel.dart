@@ -274,6 +274,7 @@ class IrisMethodChannel {
   }
 
   Future<void> dispose() async {
+    if (!_initilized) return;
     await scopedEventHandlers.clear();
     await evntSubscription.cancel();
 
