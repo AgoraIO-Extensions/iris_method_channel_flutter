@@ -550,9 +550,7 @@ class _IrisMethodChannelNative {
   }
 
   CallApiResult createNativeEventHandler(IrisMethodCall methodCall) {
-    debugPrint('eventHandlerIntPtr11111:');
     final eventHandlerIntPtr = _irisEventHandler!.address;
-    debugPrint('eventHandlerIntPtr: $eventHandlerIntPtr');
     final result = _invokeMethod(
       methodCall.funcName,
       methodCall.params,
