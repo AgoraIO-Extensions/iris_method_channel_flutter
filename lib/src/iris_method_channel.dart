@@ -434,25 +434,25 @@ class _IrisMethodChannelNative {
     assert(_irisApiEnginePtr != null, 'Make sure initilize() has been called.');
 
     return using<CallApiResult>((Arena arena) {
-      final ffi.Pointer<ffi.Char> resultPointer =
-          arena.allocate<ffi.Char>(kBasicResultLength);
+      final ffi.Pointer<ffi.Int8> resultPointer =
+          arena.allocate<ffi.Int8>(kBasicResultLength);
 
-      final ffi.Pointer<ffi.Char> funcNamePointer =
+      final ffi.Pointer<ffi.Int8> funcNamePointer =
           funcName.toNativeUtf8(allocator: arena).cast();
 
       final ffi.Pointer<Utf8> paramsPointerUtf8 =
           params.toNativeUtf8(allocator: arena);
       final paramsPointerUtf8Length = paramsPointerUtf8.length;
-      final ffi.Pointer<ffi.Char> paramsPointer = paramsPointerUtf8.cast();
+      final ffi.Pointer<ffi.Int8> paramsPointer = paramsPointerUtf8.cast();
 
       // ffi.Pointer<ffi.Void> bufferPointer;
       ffi.Pointer<ffi.Pointer<ffi.Void>> bufferListPtr;
-      ffi.Pointer<ffi.UnsignedInt> bufferListLengthPtr = ffi.nullptr;
+      ffi.Pointer<ffi.Uint32> bufferListLengthPtr = ffi.nullptr;
       int bufferLength = bufferList?.length ?? 0;
 
       if (bufferList != null) {
         bufferListPtr =
-            arena.allocate(bufferList.length * ffi.sizeOf<ffi.UintPtr>());
+            arena.allocate(bufferList.length * ffi.sizeOf<ffi.Uint64>());
 
         // bufferListLengthPtr = arena.allocate<ffi.Uint32>(bufferList.length);
 
