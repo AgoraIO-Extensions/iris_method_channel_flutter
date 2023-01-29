@@ -464,7 +464,7 @@ class _IrisMethodChannelNative {
 
       int bufferLength = buffers?.length ?? 0;
 
-      List<BufferParam>? bufferParamList = [];
+      List<BufferParam> bufferParamList = [];
 
       if (buffers != null) {
         for (int i = 0; i < bufferLength; i++) {
@@ -481,6 +481,8 @@ class _IrisMethodChannelNative {
 
           bufferParamList.add(BufferParam(bufferData.address, buffer.length));
         }
+      } else {
+        bufferParamList = rawBufferParams!;
       }
 
       final ffi.Pointer<ffi.Int8> resultPointer =
