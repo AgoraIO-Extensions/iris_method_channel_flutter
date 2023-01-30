@@ -462,12 +462,10 @@ class _IrisMethodChannelNative {
       final rawBufferParams = methodCall.rawBufferParams;
       assert(!(buffers != null && rawBufferParams != null));
 
-      int bufferLength = buffers?.length ?? 0;
-
-      List<BufferParam> bufferParamList = [];
+      List<BufferParam>? bufferParamList = [];
 
       if (buffers != null) {
-        for (int i = 0; i < bufferLength; i++) {
+        for (int i = 0; i < buffers.length; i++) {
           final buffer = buffers[i];
           if (buffer.isEmpty) {
             bufferParamList.add(const BufferParam(0, 0));
@@ -482,7 +480,7 @@ class _IrisMethodChannelNative {
           bufferParamList.add(BufferParam(bufferData.address, buffer.length));
         }
       } else {
-        bufferParamList = rawBufferParams!;
+        bufferParamList = rawBufferParams;
       }
 
       final ffi.Pointer<ffi.Int8> resultPointer =
@@ -498,8 +496,9 @@ class _IrisMethodChannelNative {
 
       ffi.Pointer<ffi.Pointer<ffi.Void>> bufferListPtr;
       ffi.Pointer<ffi.Uint32> bufferListLengthPtr = ffi.nullptr;
+      final bufferLengthLength = bufferParamList?.length ?? 0;
 
-      if (bufferParamList.isNotEmpty) {
+      if (bufferParamList != null) {
         bufferListPtr =
             arena.allocate(bufferParamList.length * ffi.sizeOf<ffi.Uint64>());
 
@@ -520,7 +519,7 @@ class _IrisMethodChannelNative {
           ..ref.result = resultPointer
           ..ref.buffer = bufferListPtr
           ..ref.length = bufferListLengthPtr
-          ..ref.buffer_count = bufferLength;
+          ..ref.buffer_count = bufferLengthLength;
 
         final irisReturnCode = _nativeIrisApiEngineBinding.callApi(
           methodCall,
@@ -556,7 +555,8 @@ class _IrisMethodChannelNative {
   void dispose() {
     assert(_irisApiEnginePtr != null);
 
-    // _destroyObservers();
+    _nativeIrisApiEngineBinding.destroyNativeApiEngine(_irisApiEnginePtr!);
+    _irisApiEnginePtr = null;
 
     _irisEvent.dispose();
 
@@ -565,9 +565,6 @@ class _IrisMethodChannelNative {
 
     calloc.free(_irisCEventHandler!);
     _irisCEventHandler = null;
-
-    _nativeIrisApiEngineBinding.destroyNativeApiEngine(_irisApiEnginePtr!);
-    _irisApiEnginePtr = null;
   }
 
   CallApiResult createNativeEventHandler(IrisMethodCall methodCall) {
