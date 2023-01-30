@@ -1,7 +1,7 @@
 #ifndef IRIIS_EVENT_H_
 #define IRIIS_EVENT_H_
 
-// Ignore warning of documentation of dart_api_dl.h
+// Ignore warning of [-Wdocumentation] of dart_api_dl.h
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdocumentation"
 #include "dart-sdk/include/dart_api_dl.h"
