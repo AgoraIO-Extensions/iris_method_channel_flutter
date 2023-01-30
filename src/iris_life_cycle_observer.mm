@@ -19,7 +19,7 @@ ILifeCycleObserver::ILifeCycleObserver(std::function<void()> cb){
 void ILifeCycleObserver::addApplicationObserver() {
   NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
 
-  applicationWillTerminateObserver = (__bridge_retained void *)
+  applicationWillTerminateObserver = (void *)
 #if TARGET_OS_IPHONE
       [center addObserverForName:UIApplicationWillTerminateNotification 
 #elif TARGET_OS_MAC
@@ -34,7 +34,7 @@ void ILifeCycleObserver::addApplicationObserver() {
 
 void ILifeCycleObserver::removeApplicationObserver() {
   if (applicationWillTerminateObserver != nullptr) {
-    id observer = (__bridge_transfer id) applicationWillTerminateObserver;
+    id observer = (id) applicationWillTerminateObserver;
     [[NSNotificationCenter defaultCenter] removeObserver:observer];
     applicationWillTerminateObserver = nullptr;
   }
