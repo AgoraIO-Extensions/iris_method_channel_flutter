@@ -7,13 +7,21 @@ import 'package:async/async.dart';
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart' show SynchronousFuture, debugPrint;
-import 'package:iris_method_channel/iris_method_channel.dart';
+import 'package:iris_method_channel/src/iris_event.dart';
 import 'package:iris_method_channel/src/native_bindings_delegate.dart';
-import 'package:iris_method_channel/src/native_iris_api_rtm_bindings_delegate.dart';
-
-import 'bindings/native_iris_api_rtm_engine_bindings.dart';
+import 'package:iris_method_channel/src/scoped_objects.dart';
+import 'bindings/native_iris_api_common_bindings.dart' as iris;
 
 // ignore_for_file: public_member_api_docs
+
+int? _mockIrisMethodChannelNativeHandle;
+void setMockIrisMethodChannelNativeHandle(
+    int? mockIrisMethodChannelNativeHandle) {
+  assert(() {
+    _mockIrisMethodChannelNativeHandle = mockIrisMethodChannelNativeHandle;
+    return true;
+  }());
+}
 
 class IrisMethodCall {
   const IrisMethodCall(this.funcName, this.params,
@@ -27,11 +35,15 @@ class IrisMethodCall {
 const int kBasicResultLength = 64 * 1024;
 
 class CallApiResult {
-  CallApiResult({required this.irisReturnCode, required this.data});
+  CallApiResult(
+      {required this.irisReturnCode, required this.data, this.rawData = ''});
 
   final int irisReturnCode;
 
   final Map<String, dynamic> data;
+
+  // TODO(littlegnal): Remove rawData after EP-253 landed.
+  final String rawData;
 }
 
 class _EventHandlerHolderKey {
@@ -135,16 +147,20 @@ class IrisMethodChannel {
   late final _Messenger messenger;
   late final StreamSubscription evntSubscription;
   final ScopedObjects scopedEventHandlers = ScopedObjects();
+  late final int _nativeHandle;
 
   static Future<void> _execute(List<Object?> args) async {
     SendPort mainApiCallSendPort = args[0] as SendPort;
     SendPort mainEventSendPort = args[1] as SendPort;
+    NativeBindingDelegateProvider provider =
+        args[2] as NativeBindingDelegateProvider;
+
     ffi.Pointer<ffi.Void>? irisApiEnginePtr;
     List<ffi.Pointer<ffi.Void>> argsInner = [];
     // We only aim to pass the irisApiEngine to the executor in the integration test (debug mode)
     assert(() {
-      if (args.length > 2) {
-        final intptr = args[2] as int?;
+      if (args.length > 3) {
+        final intptr = args[3] as int?;
         if (intptr != null) {
           irisApiEnginePtr = ffi.Pointer.fromAddress(intptr);
           argsInner = [irisApiEnginePtr!];
@@ -160,13 +176,14 @@ class IrisMethodChannel {
     final apiCallPort = ReceivePort();
     // final eventPort = ReceivePort('IrisApiEngine_EventPort');
 
-    final nativeBindingDelegate = NativeIrisApiRtmBindingsDelegate();
+    final nativeBindingDelegate = provider.provide();
 
     _IrisMethodChannelNative executor =
         _IrisMethodChannelNative(nativeBindingDelegate);
     executor.initilize(mainEventSendPort, argsInner);
     mainApiCallSendPort.send([
       apiCallPort.sendPort,
+      executor.getNativeHandle(),
     ]);
 
     // Wait for messages from the main isolate.
@@ -220,7 +237,7 @@ class IrisMethodChannel {
     Isolate.exit();
   }
 
-  Future<void> initilize() async {
+  Future<void> initilize(NativeBindingDelegateProvider provider) async {
     if (_initilized) return;
 
     final apiCallPort = ReceivePort();
@@ -228,6 +245,8 @@ class IrisMethodChannel {
     await Isolate.spawn(_execute, [
       apiCallPort.sendPort,
       eventPort.sendPort,
+      provider,
+      _mockIrisMethodChannelNativeHandle,
     ]);
 
     // Convert the ReceivePort into a StreamQueue to receive messages from the
@@ -241,6 +260,7 @@ class IrisMethodChannel {
     // SendPort sendPort = await events.next;
     final msg = await responseQueue.next;
     final requestPort = msg[0];
+    _nativeHandle = msg[1];
 
     messenger = _Messenger(requestPort, responseQueue);
 
@@ -351,6 +371,10 @@ class IrisMethodChannel {
           .listSend(_DestroyNativeEventHandlerListRequest(methodCalls));
     }
   }
+
+  int getNativeHandle() {
+    return _nativeHandle;
+  }
 }
 
 abstract class _Request {}
@@ -404,36 +428,61 @@ class _IrisMethodChannelNative {
   ffi.Pointer<ffi.Void>? _irisApiEnginePtr;
 
   late final IrisEvent _irisEvent;
-  ffi.Pointer<IrisCEventHandler>? _irisCEventHandler;
+  ffi.Pointer<iris.IrisCEventHandler>? _irisCEventHandler;
   ffi.Pointer<ffi.Void>? _irisEventHandler;
 
   void initilize(SendPort sendPort, List<ffi.Pointer<ffi.Void>> args) {
     _nativeIrisApiEngineBinding.initialize();
 
-    _irisApiEnginePtr = _nativeIrisApiEngineBinding.createNativeApiEngine(args);
+    if (args.isNotEmpty) {
+      _irisApiEnginePtr = args[0];
+    } else {
+      _irisApiEnginePtr =
+          _nativeIrisApiEngineBinding.createNativeApiEngine(args);
+    }
 
     _irisEvent = IrisEvent();
-    // _irisEvent.setEventHandler(_SendableIrisEventHandler(sendPort));
 
     _irisEvent.registerEventHandler(sendPort);
 
-    _irisCEventHandler = calloc<IrisCEventHandler>()
-          ..ref.OnEvent = _irisEvent.onEventPtr.cast()
-        // ..ref.OnEventEx = _irisEvent.onEventExPtr
-        ;
+    _irisCEventHandler = calloc<iris.IrisCEventHandler>()
+      ..ref.OnEvent = _irisEvent.onEventPtr.cast();
 
     _irisEventHandler =
         _nativeIrisApiEngineBinding.createIrisEventHandler(_irisCEventHandler!);
   }
 
-  CallApiResult _invokeMethod(
-    String funcName,
-    String params, {
-    List<BufferParam>? bufferList,
-  }) {
+  CallApiResult _invokeMethod(IrisMethodCall methodCall) {
     assert(_irisApiEnginePtr != null, 'Make sure initilize() has been called.');
 
     return using<CallApiResult>((Arena arena) {
+      final funcName = methodCall.funcName;
+      final params = methodCall.params;
+      final buffers = methodCall.buffers;
+      final rawBufferParams = methodCall.rawBufferParams;
+      assert(!(buffers != null && rawBufferParams != null));
+
+      List<BufferParam>? bufferParamList = [];
+
+      if (buffers != null) {
+        for (int i = 0; i < buffers.length; i++) {
+          final buffer = buffers[i];
+          if (buffer.isEmpty) {
+            bufferParamList.add(const BufferParam(0, 0));
+            continue;
+          }
+          final ffi.Pointer<ffi.Uint8> bufferData =
+              arena.allocate<ffi.Uint8>(buffer.length);
+
+          final pointerList = bufferData.asTypedList(buffer.length);
+          pointerList.setAll(0, buffer);
+
+          bufferParamList.add(BufferParam(bufferData.address, buffer.length));
+        }
+      } else {
+        bufferParamList = rawBufferParams;
+      }
+
       final ffi.Pointer<ffi.Int8> resultPointer =
           arena.allocate<ffi.Int8>(kBasicResultLength);
 
@@ -445,22 +494,17 @@ class _IrisMethodChannelNative {
       final paramsPointerUtf8Length = paramsPointerUtf8.length;
       final ffi.Pointer<ffi.Int8> paramsPointer = paramsPointerUtf8.cast();
 
-      // ffi.Pointer<ffi.Void> bufferPointer;
       ffi.Pointer<ffi.Pointer<ffi.Void>> bufferListPtr;
       ffi.Pointer<ffi.Uint32> bufferListLengthPtr = ffi.nullptr;
-      int bufferLength = bufferList?.length ?? 0;
+      final bufferLengthLength = bufferParamList?.length ?? 0;
 
-      if (bufferList != null) {
+      if (bufferParamList != null) {
         bufferListPtr =
-            arena.allocate(bufferList.length * ffi.sizeOf<ffi.Uint64>());
+            arena.allocate(bufferParamList.length * ffi.sizeOf<ffi.Uint64>());
 
-        // bufferListLengthPtr = arena.allocate<ffi.Uint32>(bufferList.length);
-
-        for (int i = 0; i < bufferList.length; i++) {
-          final bufferParam = bufferList[i];
+        for (int i = 0; i < bufferParamList.length; i++) {
+          final bufferParam = bufferParamList[i];
           bufferListPtr[i] = ffi.Pointer.fromAddress(bufferParam.intPtr);
-          // ffi.Pointer<ffi.Uint64>.fromAddress(bufferParam.intPtr).cast();
-          // bufferListLengthPtr[i] = bufferParam.length;
         }
       } else {
         bufferListPtr = ffi.nullptr;
@@ -468,17 +512,20 @@ class _IrisMethodChannelNative {
       }
 
       try {
-        final apiParam = arena<ApiParam>()
+        final apiParam = arena<iris.ApiParam>()
           ..ref.event = funcNamePointer
           ..ref.data = paramsPointer
           ..ref.data_size = paramsPointerUtf8Length
           ..ref.result = resultPointer
           ..ref.buffer = bufferListPtr
           ..ref.length = bufferListLengthPtr
-          ..ref.buffer_count = bufferLength;
+          ..ref.buffer_count = bufferLengthLength;
 
-        final irisReturnCode =
-            _nativeIrisApiEngineBinding.callApi(_irisApiEnginePtr!, apiParam);
+        final irisReturnCode = _nativeIrisApiEngineBinding.callApi(
+          methodCall,
+          _irisApiEnginePtr!,
+          apiParam,
+        );
 
         if (irisReturnCode != 0) {
           return CallApiResult(irisReturnCode: irisReturnCode, data: const {});
@@ -488,7 +535,11 @@ class _IrisMethodChannelNative {
 
         final resultMap = Map<String, dynamic>.from(jsonDecode(result));
 
-        return CallApiResult(irisReturnCode: irisReturnCode, data: resultMap);
+        return CallApiResult(
+          irisReturnCode: irisReturnCode,
+          data: resultMap,
+          rawData: result,
+        );
       } catch (e) {
         debugPrint(
             '[_ApiCallExecutor] $funcName, params: $params\nerror: ${e.toString()}');
@@ -498,44 +549,14 @@ class _IrisMethodChannelNative {
   }
 
   CallApiResult invokeMethod(IrisMethodCall methodCall) {
-    return using<CallApiResult>((Arena arena) {
-      final funcName = methodCall.funcName;
-      final params = methodCall.params;
-      final buffers = methodCall.buffers;
-      final rawBufferParams = methodCall.rawBufferParams;
-      assert(!(buffers != null && rawBufferParams != null));
-
-      int bufferLength = buffers?.length ?? 0;
-
-      List<BufferParam>? buffersPtrList = [];
-
-      if (buffers != null) {
-        for (int i = 0; i < bufferLength; i++) {
-          final buffer = buffers[i];
-          if (buffer.isEmpty) {
-            buffersPtrList.add(const BufferParam(0, 0));
-            continue;
-          }
-          final ffi.Pointer<ffi.Uint8> bufferData =
-              arena.allocate<ffi.Uint8>(buffer.length);
-
-          final pointerList = bufferData.asTypedList(buffer.length);
-          pointerList.setAll(0, buffer);
-
-          buffersPtrList.add(BufferParam(bufferData.address, buffer.length));
-        }
-
-        return _invokeMethod(funcName, params, bufferList: buffersPtrList);
-      }
-
-      return _invokeMethod(funcName, params, bufferList: rawBufferParams);
-    });
+    return _invokeMethod(methodCall);
   }
 
   void dispose() {
     assert(_irisApiEnginePtr != null);
 
-    // _destroyObservers();
+    _nativeIrisApiEngineBinding.destroyNativeApiEngine(_irisApiEnginePtr!);
+    _irisApiEnginePtr = null;
 
     _irisEvent.dispose();
 
@@ -544,18 +565,15 @@ class _IrisMethodChannelNative {
 
     calloc.free(_irisCEventHandler!);
     _irisCEventHandler = null;
-
-    _nativeIrisApiEngineBinding.destroyNativeApiEngine(_irisApiEnginePtr!);
-    _irisApiEnginePtr = null;
   }
 
   CallApiResult createNativeEventHandler(IrisMethodCall methodCall) {
     final eventHandlerIntPtr = _irisEventHandler!.address;
-    final result = _invokeMethod(
+    final result = _invokeMethod(IrisMethodCall(
       methodCall.funcName,
       methodCall.params,
-      bufferList: [BufferParam(eventHandlerIntPtr, 1)],
-    );
+      rawBufferParams: [BufferParam(eventHandlerIntPtr, 1)],
+    ));
     result.data['observerIntPtr'] = eventHandlerIntPtr;
     return result;
   }
@@ -568,14 +586,15 @@ class _IrisMethodChannelNative {
     if (methodCall.funcName.isEmpty) {
       result = CallApiResult(irisReturnCode: 0, data: {'result': 0});
     } else {
-      result = _invokeMethod(
-        methodCall.funcName,
-        methodCall.params,
-        bufferList: methodCall.rawBufferParams,
-      );
+      result = _invokeMethod(methodCall);
     }
 
     return result;
+  }
+
+  int getNativeHandle() {
+    assert(_irisApiEnginePtr != null);
+    return _irisApiEnginePtr!.address;
   }
 }
 

@@ -4,7 +4,9 @@ import 'package:iris_method_channel/src/bindings/native_iris_api_rtm_engine_bind
 
 import 'dart:ffi' as ffi;
 
+import 'iris_method_channel.dart';
 import 'native_bindings_delegate.dart';
+import 'bindings/native_iris_api_common_bindings.dart' as iris;
 
 // ignore_for_file: public_member_api_docs
 
@@ -47,17 +49,18 @@ class NativeIrisApiRtmBindingsDelegate extends NativeBindingDelegate {
 
   @override
   int callApi(
+    IrisMethodCall methodCall,
     ffi.Pointer<ffi.Void> apiEnginePtr,
-    ffi.Pointer<ApiParam> param,
+    ffi.Pointer<iris.ApiParam> param,
   ) {
-    return _binding.CallIrisRtmApi(apiEnginePtr, param);
+    return _binding.CallIrisRtmApi(apiEnginePtr, param.cast());
   }
 
   @override
   ffi.Pointer<ffi.Void> createIrisEventHandler(
-    ffi.Pointer<IrisCEventHandler> eventHandler,
+    ffi.Pointer<iris.IrisCEventHandler> eventHandler,
   ) {
-    return _binding.CreateIrisEventHandler(eventHandler);
+    return _binding.CreateIrisEventHandler(eventHandler.cast());
   }
 
   @override
@@ -70,5 +73,13 @@ class NativeIrisApiRtmBindingsDelegate extends NativeBindingDelegate {
   @override
   void destroyNativeApiEngine(ffi.Pointer<ffi.Void> apiEnginePtr) {
     _binding.DestroyIrisRtmEngine(apiEnginePtr);
+  }
+}
+
+class LegacyNativeBindingDelegateProvider
+    implements NativeBindingDelegateProvider {
+  @override
+  NativeBindingDelegate provide() {
+    return NativeIrisApiRtmBindingsDelegate();
   }
 }
