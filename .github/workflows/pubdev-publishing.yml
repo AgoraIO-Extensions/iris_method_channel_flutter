@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v3
+      - name: Get tags
+        run: git fetch --tags origin
       - name: Check Versions 🔎
         run: |
           set -eo pipefail
