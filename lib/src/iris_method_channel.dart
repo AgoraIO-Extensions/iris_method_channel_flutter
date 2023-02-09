@@ -4,6 +4,7 @@ import 'dart:ffi' as ffi;
 import 'dart:isolate';
 import 'dart:typed_data';
 import 'package:async/async.dart';
+import 'package:meta/meta.dart';
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart' show SynchronousFuture, debugPrint;
@@ -68,10 +69,11 @@ class _EventHandlerHolderKey {
   int get hashCode => Object.hash(registerName, unregisterName);
 }
 
-class _EventHandlerHolder
+@visibleForTesting
+class EventHandlerHolder
     with ScopedDisposableObjectMixin
     implements DisposableObject {
-  _EventHandlerHolder({required this.key});
+  EventHandlerHolder({required this.key});
   final _EventHandlerHolderKey key;
   final Set<EventLoopEventHandler> _eventHandlers = {};
 
@@ -83,7 +85,6 @@ class _EventHandlerHolder
 
   Future<void> removeEventHandler(EventLoopEventHandler eventHandler) async {
     _eventHandlers.remove(eventHandler);
-    if (_eventHandlers.isEmpty) {}
   }
 
   Set<EventLoopEventHandler> getEventHandlers() => _eventHandlers;
@@ -146,14 +147,14 @@ class IrisMethodChannel {
   bool _initilized = false;
   late final _Messenger messenger;
   late final StreamSubscription evntSubscription;
+  @visibleForTesting
   final ScopedObjects scopedEventHandlers = ScopedObjects();
   late final int _nativeHandle;
 
   static Future<void> _execute(List<Object?> args) async {
     SendPort mainApiCallSendPort = args[0] as SendPort;
     SendPort mainEventSendPort = args[1] as SendPort;
-    NativeBindingDelegateProvider provider =
-        args[2] as NativeBindingDelegateProvider;
+    NativeBindingsProvider provider = args[2] as NativeBindingsProvider;
 
     ffi.Pointer<ffi.Void>? irisApiEnginePtr;
     List<ffi.Pointer<ffi.Void>> argsInner = [];
@@ -176,10 +177,11 @@ class IrisMethodChannel {
     final apiCallPort = ReceivePort();
     // final eventPort = ReceivePort('IrisApiEngine_EventPort');
 
-    final nativeBindingDelegate = provider.provide();
+    final nativeBindingDelegate = provider.provideNativeBindingDelegate();
+    final irisEvent = provider.provideIrisEvent();
 
     _IrisMethodChannelNative executor =
-        _IrisMethodChannelNative(nativeBindingDelegate);
+        _IrisMethodChannelNative(nativeBindingDelegate, irisEvent);
     executor.initilize(mainEventSendPort, argsInner);
     mainApiCallSendPort.send([
       apiCallPort.sendPort,
@@ -237,7 +239,7 @@ class IrisMethodChannel {
     Isolate.exit();
   }
 
-  Future<void> initilize(NativeBindingDelegateProvider provider) async {
+  Future<void> initilize(NativeBindingsProvider provider) async {
     if (_initilized) return;
 
     final apiCallPort = ReceivePort();
@@ -269,7 +271,7 @@ class IrisMethodChannel {
 
       bool handled = false;
       for (final es in scopedEventHandlers.values) {
-        final _EventHandlerHolder eh = es as _EventHandlerHolder;
+        final EventHandlerHolder eh = es as EventHandlerHolder;
         for (final e in eh.getEventHandlers()) {
           if (e.handleEvent(
               eventMessage.event, eventMessage.data, eventMessage.buffers)) {
@@ -303,9 +305,9 @@ class IrisMethodChannel {
 
   Future<CallApiResult> registerEventHandler(
       ScopedEvent scopedEvent, String params) async {
-    final _EventHandlerHolder holder = scopedEventHandlers.putIfAbsent(
+    final EventHandlerHolder holder = scopedEventHandlers.putIfAbsent(
         scopedEvent.scopedKey,
-        () => _EventHandlerHolder(
+        () => EventHandlerHolder(
               key: _EventHandlerHolderKey(
                 registerName: scopedEvent.registerName,
                 unregisterName: scopedEvent.unregisterName,
@@ -330,7 +332,7 @@ class IrisMethodChannel {
 
   Future<CallApiResult> unregisterEventHandler(
       ScopedEvent scopedEvent, String params) async {
-    final _EventHandlerHolder? holder =
+    final EventHandlerHolder? holder =
         scopedEventHandlers.get(scopedEvent.scopedKey);
     late CallApiResult result;
     if (holder != null) {
@@ -343,6 +345,9 @@ class IrisMethodChannel {
             rawBufferParams: [BufferParam(holder.nativeEventHandlerIntPtr, 1)],
           ),
         ));
+
+        scopedEventHandlers.remove(scopedEvent.scopedKey);
+
         return result;
       }
     }
@@ -352,10 +357,8 @@ class IrisMethodChannel {
   }
 
   Future<void> unregisterEventHandlers(TypedScopedKey scopedKey) async {
-    final _EventHandlerHolder? holder = scopedEventHandlers.get(scopedKey);
+    final EventHandlerHolder? holder = scopedEventHandlers.remove(scopedKey);
     if (holder != null) {
-      await holder.dispose();
-
       final methodCalls = holder
           .getEventHandlers()
           .map((e) => IrisMethodCall(
@@ -369,6 +372,8 @@ class IrisMethodChannel {
 
       await messenger
           .listSend(_DestroyNativeEventHandlerListRequest(methodCalls));
+
+      await holder.dispose();
     }
   }
 
@@ -423,11 +428,11 @@ class _DestroyNativeEventHandlerListRequest extends _IrisMethodCallListRequest {
 }
 
 class _IrisMethodChannelNative {
-  _IrisMethodChannelNative(this._nativeIrisApiEngineBinding);
+  _IrisMethodChannelNative(this._nativeIrisApiEngineBinding, this._irisEvent);
   final NativeBindingDelegate _nativeIrisApiEngineBinding;
   ffi.Pointer<ffi.Void>? _irisApiEnginePtr;
 
-  late final IrisEvent _irisEvent;
+  final IrisEvent _irisEvent;
   ffi.Pointer<iris.IrisCEventHandler>? _irisCEventHandler;
   ffi.Pointer<ffi.Void>? _irisEventHandler;
 
@@ -440,8 +445,6 @@ class _IrisMethodChannelNative {
       _irisApiEnginePtr =
           _nativeIrisApiEngineBinding.createNativeApiEngine(args);
     }
-
-    _irisEvent = IrisEvent();
 
     _irisEvent.registerEventHandler(sendPort);
 
