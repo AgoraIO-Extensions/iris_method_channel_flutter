@@ -56,7 +56,6 @@ class IrisEvent {
   /// Construct [IrisEvent]
   IrisEvent() {
     _nativeIrisEventBinding = NativeIrisEventBinding(_loadLib());
-    _nativeIrisEventBinding.InitDartApiDL(ffi.NativeApi.initializeApiDLData);
   }
 
   /// Parse message to [IrisEventMessage] object
@@ -80,6 +79,11 @@ class IrisEvent {
   }
 
   late final NativeIrisEventBinding _nativeIrisEventBinding;
+
+  /// Initialize the [IrisEvent], which call `InitDartApiDL` directly
+  void initialize() {
+    _nativeIrisEventBinding.InitDartApiDL(ffi.NativeApi.initializeApiDLData);
+  }
 
   /// Register dart [SendPort] to send the message from native
   void registerEventHandler(SendPort sendPort) {
