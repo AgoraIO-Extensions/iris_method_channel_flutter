@@ -7,7 +7,8 @@ import 'package:async/async.dart';
 import 'package:meta/meta.dart';
 
 import 'package:ffi/ffi.dart';
-import 'package:flutter/foundation.dart' show SynchronousFuture, debugPrint;
+import 'package:flutter/foundation.dart'
+    show SynchronousFuture, VoidCallback, debugPrint;
 import 'package:iris_method_channel/src/iris_event.dart';
 import 'package:iris_method_channel/src/native_bindings_delegate.dart';
 import 'package:iris_method_channel/src/scoped_objects.dart';
@@ -141,6 +142,147 @@ class _Messenger implements DisposableObject {
   }
 }
 
+class _InitilizationArgs {
+  _InitilizationArgs(
+    this.apiCallPortSendPort,
+    this.eventPortSendPort,
+    this.onExitSendPort,
+    this.provider,
+    this.mockIrisMethodChannelNativeHandle,
+  );
+
+  final SendPort apiCallPortSendPort;
+  final SendPort eventPortSendPort;
+  final SendPort? onExitSendPort;
+  final NativeBindingsProvider provider;
+  final int? mockIrisMethodChannelNativeHandle;
+}
+
+class _InitilizationResponse {
+  _InitilizationResponse(
+    this.apiCallPortSendPort,
+    this.irisApiEngineNativeHandle,
+    this.debugIrisCEventHandlerNativeHandle,
+    this.debugIrisEventHandlerNativeHandle,
+  );
+
+  final SendPort apiCallPortSendPort;
+  final int irisApiEngineNativeHandle;
+  final int? debugIrisCEventHandlerNativeHandle;
+  final int? debugIrisEventHandlerNativeHandle;
+}
+
+/// Listener when hot restarted.
+///
+/// You can release some native resources, such like delete the pointer which is
+/// created by ffi.
+///
+/// NOTE that:
+/// * This listener is only received on debug mode.
+/// * You should not comunicate with the [IrisMethodChannel] anymore inside this listener.
+/// * You should not do some asynchronous jobs inside this listener.
+typedef HotRestartListener = void Function(Object? message);
+
+class _HotRestartFinalizer {
+  _HotRestartFinalizer(this.provider) {
+    assert(() {
+      _onExitPort = ReceivePort();
+      _onExitSubscription = _onExitPort?.listen((message) {
+        _finalize(message);
+      });
+
+      return true;
+    }());
+  }
+
+  final NativeBindingsProvider provider;
+
+  final List<HotRestartListener> _hotRestartListeners = [];
+
+  late final ReceivePort? _onExitPort;
+  late final StreamSubscription? _onExitSubscription;
+
+  SendPort? get onExitSendPort => _onExitPort?.sendPort;
+
+  bool _isFinalize = false;
+
+  int? _debugIrisApiEngineNativeHandle;
+  set debugIrisApiEngineNativeHandle(int value) {
+    _debugIrisApiEngineNativeHandle = value;
+  }
+
+  int? _debugIrisCEventHandlerNativeHandle;
+  set debugIrisCEventHandlerNativeHandle(int? value) {
+    _debugIrisCEventHandlerNativeHandle = value;
+  }
+
+  int? _debugIrisEventHandlerNativeHandle;
+  set debugIrisEventHandlerNativeHandle(int? value) {
+    _debugIrisEventHandlerNativeHandle = value;
+  }
+
+  void _finalize(dynamic msg) {
+    if (_isFinalize) {
+      return;
+    }
+    _isFinalize = true;
+
+    // We will receive a value of `0` as message when the `IrisMethodChannel.dispose`
+    // is called normally, which will call the `Isolate.exit(onExitSendPort, 0)`
+    // to send a value of `0` as a exit response. See `_execute` function for more detail.
+    if (msg != null && msg == 0) {
+      return;
+    }
+
+    for (final listener in _hotRestartListeners.reversed) {
+      listener(msg);
+    }
+
+    // When hot restart happen, the `IrisMethodChannel.dispose` function will not 
+    // be called normally, cause the native API engine can not be destroy correctly,
+    // so we need to release the native resources which create by the 
+    // `NativeBindingDelegate` explicitly.
+    final nativeBindingDelegate = provider.provideNativeBindingDelegate();
+    nativeBindingDelegate.initialize();
+
+    nativeBindingDelegate.destroyNativeApiEngine(
+        ffi.Pointer.fromAddress(_debugIrisApiEngineNativeHandle!));
+
+    calloc.free(ffi.Pointer.fromAddress(_debugIrisCEventHandlerNativeHandle!));
+    nativeBindingDelegate.destroyIrisEventHandler(
+        ffi.Pointer.fromAddress(_debugIrisEventHandlerNativeHandle!));
+
+    final irisEvent = provider.provideIrisEvent();
+    irisEvent.dispose();
+
+    _onExitSubscription?.cancel();
+  }
+
+  VoidCallback addHotRestartListener(HotRestartListener listener) {
+    assert(() {
+      final Object? debugCheckForReturnedFuture = listener as dynamic;
+      if (debugCheckForReturnedFuture is Future) {
+        throw UnsupportedError(
+            'HotRestartListener must be a void method without an `async` keyword.');
+      }
+      return true;
+    }());
+
+    _hotRestartListeners.add(listener);
+    return () {
+      removeHotRestartListener(listener);
+    };
+  }
+
+  void removeHotRestartListener(HotRestartListener listener) {
+    _hotRestartListeners.remove(listener);
+  }
+
+  void dispose() {
+    _hotRestartListeners.clear();
+  }
+}
+
 class IrisMethodChannel {
   IrisMethodChannel();
 
@@ -151,21 +293,24 @@ class IrisMethodChannel {
   final ScopedObjects scopedEventHandlers = ScopedObjects();
   late final int _nativeHandle;
 
-  static Future<void> _execute(List<Object?> args) async {
-    SendPort mainApiCallSendPort = args[0] as SendPort;
-    SendPort mainEventSendPort = args[1] as SendPort;
-    NativeBindingsProvider provider = args[2] as NativeBindingsProvider;
+  @visibleForTesting
+  late final Isolate workerIsolate;
+  late final _HotRestartFinalizer _hotRestartFinalizer;
+
+  static Future<void> _execute(_InitilizationArgs args) async {
+    SendPort mainApiCallSendPort = args.apiCallPortSendPort;
+    SendPort mainEventSendPort = args.eventPortSendPort;
+    SendPort? onExitSendPort = args.onExitSendPort;
+    NativeBindingsProvider provider = args.provider;
 
     ffi.Pointer<ffi.Void>? irisApiEnginePtr;
     List<ffi.Pointer<ffi.Void>> argsInner = [];
     // We only aim to pass the irisApiEngine to the executor in the integration test (debug mode)
     assert(() {
-      if (args.length > 3) {
-        final intptr = args[3] as int?;
-        if (intptr != null) {
-          irisApiEnginePtr = ffi.Pointer.fromAddress(intptr);
-          argsInner = [irisApiEnginePtr!];
-        }
+      final intptr = args.mockIrisMethodChannelNativeHandle;
+      if (intptr != null) {
+        irisApiEnginePtr = ffi.Pointer.fromAddress(intptr);
+        argsInner = [irisApiEnginePtr!];
       }
 
       return true;
@@ -173,9 +318,7 @@ class IrisMethodChannel {
 
     // Send a SendPort to the main isolate so that it can send JSON strings to
     // this isolate.
-    // final apiCallPort = ReceivePort('IrisApiEngine_ApiCallPort');
     final apiCallPort = ReceivePort();
-    // final eventPort = ReceivePort('IrisApiEngine_EventPort');
 
     final nativeBindingDelegate = provider.provideNativeBindingDelegate();
     final irisEvent = provider.provideIrisEvent();
@@ -183,10 +326,26 @@ class IrisMethodChannel {
     _IrisMethodChannelNative executor =
         _IrisMethodChannelNative(nativeBindingDelegate, irisEvent);
     executor.initilize(mainEventSendPort, argsInner);
-    mainApiCallSendPort.send([
+
+    int? debugIrisCEventHandlerNativeHandle;
+    int? debugIrisEventHandlerNativeHandle;
+
+    assert(() {
+      debugIrisCEventHandlerNativeHandle =
+          executor.irisCEventHandlerNativeHandle;
+      debugIrisEventHandlerNativeHandle = executor.irisEventHandlerNativeHandle;
+
+      return true;
+    }());
+
+    final _InitilizationResponse initilizationResponse = _InitilizationResponse(
       apiCallPort.sendPort,
-      executor.getNativeHandle(),
-    ]);
+      executor.irisApiEngineNativeHandle,
+      debugIrisCEventHandlerNativeHandle,
+      debugIrisEventHandlerNativeHandle,
+    );
+
+    mainApiCallSendPort.send(initilizationResponse);
 
     // Wait for messages from the main isolate.
     await for (final request in apiCallPort) {
@@ -236,7 +395,7 @@ class IrisMethodChannel {
     }
 
     executor.dispose();
-    Isolate.exit();
+    Isolate.exit(onExitSendPort, 0);
   }
 
   Future<void> initilize(NativeBindingsProvider provider) async {
@@ -244,12 +403,20 @@ class IrisMethodChannel {
 
     final apiCallPort = ReceivePort();
     final eventPort = ReceivePort();
-    await Isolate.spawn(_execute, [
-      apiCallPort.sendPort,
-      eventPort.sendPort,
-      provider,
-      _mockIrisMethodChannelNativeHandle,
-    ]);
+
+    _hotRestartFinalizer = _HotRestartFinalizer(provider);
+
+    workerIsolate = await Isolate.spawn(
+      _execute,
+      _InitilizationArgs(
+        apiCallPort.sendPort,
+        eventPort.sendPort,
+        _hotRestartFinalizer.onExitSendPort,
+        provider,
+        _mockIrisMethodChannelNativeHandle,
+      ),
+      onExit: _hotRestartFinalizer.onExitSendPort,
+    );
 
     // Convert the ReceivePort into a StreamQueue to receive messages from the
     // spawned isolate using a pull-based interface. Events are stored in this
@@ -261,8 +428,21 @@ class IrisMethodChannel {
     // used to communicate with the spawned isolate.
     // SendPort sendPort = await events.next;
     final msg = await responseQueue.next;
-    final requestPort = msg[0];
-    _nativeHandle = msg[1];
+    assert(msg is _InitilizationResponse);
+    final ir = msg as _InitilizationResponse;
+    final requestPort = ir.apiCallPortSendPort;
+    _nativeHandle = ir.irisApiEngineNativeHandle;
+
+    assert(() {
+      _hotRestartFinalizer.debugIrisApiEngineNativeHandle =
+          ir.irisApiEngineNativeHandle;
+      _hotRestartFinalizer.debugIrisCEventHandlerNativeHandle =
+          ir.debugIrisCEventHandlerNativeHandle;
+      _hotRestartFinalizer.debugIrisEventHandlerNativeHandle =
+          ir.debugIrisEventHandlerNativeHandle;
+
+      return true;
+    }());
 
     messenger = _Messenger(requestPort, responseQueue);
 
@@ -297,6 +477,7 @@ class IrisMethodChannel {
 
   Future<void> dispose() async {
     if (!_initilized) return;
+    _hotRestartFinalizer.dispose();
     await scopedEventHandlers.clear();
     await evntSubscription.cancel();
 
@@ -380,6 +561,14 @@ class IrisMethodChannel {
   int getNativeHandle() {
     return _nativeHandle;
   }
+
+  VoidCallback addHotRestartListener(HotRestartListener listener) {
+    return _hotRestartFinalizer.addHotRestartListener(listener);
+  }
+
+  void removeHotRestartListener(HotRestartListener listener) {
+    _hotRestartFinalizer.removeHotRestartListener(listener);
+  }
 }
 
 abstract class _Request {}
@@ -430,13 +619,28 @@ class _DestroyNativeEventHandlerListRequest extends _IrisMethodCallListRequest {
 class _IrisMethodChannelNative {
   _IrisMethodChannelNative(this._nativeIrisApiEngineBinding, this._irisEvent);
   final NativeBindingDelegate _nativeIrisApiEngineBinding;
+
   ffi.Pointer<ffi.Void>? _irisApiEnginePtr;
+  int get irisApiEngineNativeHandle {
+    assert(_irisApiEnginePtr != null);
+    return _irisApiEnginePtr!.address;
+  }
 
   final IrisEvent _irisEvent;
   ffi.Pointer<iris.IrisCEventHandler>? _irisCEventHandler;
+  int get irisCEventHandlerNativeHandle {
+    assert(_irisCEventHandler != null);
+    return _irisCEventHandler!.address;
+  }
+
   ffi.Pointer<ffi.Void>? _irisEventHandler;
+  int get irisEventHandlerNativeHandle {
+    assert(_irisEventHandler != null);
+    return _irisEventHandler!.address;
+  }
 
   void initilize(SendPort sendPort, List<ffi.Pointer<ffi.Void>> args) {
+    _irisEvent.initialize();
     _nativeIrisApiEngineBinding.initialize();
 
     if (args.isNotEmpty) {
@@ -593,11 +797,6 @@ class _IrisMethodChannelNative {
     }
 
     return result;
-  }
-
-  int getNativeHandle() {
-    assert(_irisApiEnginePtr != null);
-    return _irisApiEnginePtr!.address;
   }
 }
 

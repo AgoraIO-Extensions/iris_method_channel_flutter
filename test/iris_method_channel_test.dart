@@ -113,21 +113,82 @@ class _FakeNativeBindingDelegate implements NativeBindingDelegate {
   }
 
   @override
-  void destroyNativeApiEngine(ffi.Pointer<ffi.Void> apiEnginePtr) {}
+  void destroyNativeApiEngine(ffi.Pointer<ffi.Void> apiEnginePtr) {
+    final record = _CallApiRecord(
+      const IrisMethodCall('destroyNativeApiEngine', '{}'),
+      _ApiParam(
+        'destroyNativeApiEngine',
+        '{}',
+      ),
+    );
+    apiCallPortSendPort.send(record);
+  }
 
   @override
-  void initialize() {}
+  void initialize() {
+    final record = _CallApiRecord(
+      const IrisMethodCall('initialize', '{}'),
+      _ApiParam(
+        'initialize',
+        '{}',
+      ),
+    );
+    apiCallPortSendPort.send(record);
+  }
 }
 
 class _FakeIrisEvent implements IrisEvent {
-  @override
-  void registerEventHandler(SendPort sendPort) {}
+  _FakeIrisEvent(this.apiCallPortSendPort);
+
+  final SendPort apiCallPortSendPort;
 
   @override
-  void unregisterEventHandler(SendPort sendPort) {}
+  void initialize() {
+    final record = _CallApiRecord(
+      const IrisMethodCall('IrisEvent_initialize', '{}'),
+      _ApiParam(
+        'IrisEvent_initialize',
+        '{}',
+      ),
+    );
+    apiCallPortSendPort.send(record);
+  }
 
   @override
-  void dispose() {}
+  void registerEventHandler(SendPort sendPort) {
+    final record = _CallApiRecord(
+      const IrisMethodCall('IrisEvent_registerEventHandler', '{}'),
+      _ApiParam(
+        'IrisEvent_registerEventHandler',
+        '{}',
+      ),
+    );
+    apiCallPortSendPort.send(record);
+  }
+
+  @override
+  void unregisterEventHandler(SendPort sendPort) {
+    final record = _CallApiRecord(
+      const IrisMethodCall('IrisEvent_unregisterEventHandler', '{}'),
+      _ApiParam(
+        'IrisEvent_unregisterEventHandler',
+        '{}',
+      ),
+    );
+    apiCallPortSendPort.send(record);
+  }
+
+  @override
+  void dispose() {
+    final record = _CallApiRecord(
+      const IrisMethodCall('IrisEvent_dispose', '{}'),
+      _ApiParam(
+        'IrisEvent_dispose',
+        '{}',
+      ),
+    );
+    apiCallPortSendPort.send(record);
+  }
 
   @override
   ffi.Pointer<
@@ -166,15 +227,19 @@ class _TestEventLoopEventHandler extends EventLoopEventHandler {
 }
 
 void main() {
-  test('invokeMethod', () async {
-    final _FakeNativeBindingDelegateMessenger messenger =
-        _FakeNativeBindingDelegateMessenger();
+  late _FakeNativeBindingDelegateMessenger messenger;
+  late NativeBindingsProvider nativeBindingsProvider;
+
+  setUp(() {
+    messenger = _FakeNativeBindingDelegateMessenger();
     final _FakeNativeBindingDelegate nativeBindingDelegate =
         _FakeNativeBindingDelegate(messenger.getSendPort());
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent();
-    final NativeBindingsProvider nativeBindingsProvider =
+    final _FakeIrisEvent irisEvent = _FakeIrisEvent(messenger.getSendPort());
+    nativeBindingsProvider =
         _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
+  });
 
+  test('invokeMethod', () async {
     final irisMethodChannel = IrisMethodChannel();
     await irisMethodChannel.initilize(nativeBindingsProvider);
     final callApiResult = await irisMethodChannel
@@ -186,16 +251,6 @@ void main() {
   });
 
   test('registerEventHandler', () async {
-    final _FakeNativeBindingDelegateMessenger messenger =
-        _FakeNativeBindingDelegateMessenger();
-    final _FakeNativeBindingDelegate nativeBindingDelegate =
-        _FakeNativeBindingDelegate(
-      messenger.getSendPort(),
-    );
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent();
-    final NativeBindingsProvider nativeBindingsProvider =
-        _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
-
     final irisMethodChannel = IrisMethodChannel();
     await irisMethodChannel.initilize(nativeBindingsProvider);
 
@@ -230,7 +285,7 @@ void main() {
         _FakeNativeBindingDelegate(
       messenger.getSendPort(),
     );
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent();
+    final _FakeIrisEvent irisEvent = _FakeIrisEvent(messenger.getSendPort());
     final NativeBindingsProvider nativeBindingsProvider =
         _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
 
@@ -272,7 +327,7 @@ void main() {
         _FakeNativeBindingDelegate(
       messenger.getSendPort(),
     );
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent();
+    final _FakeIrisEvent irisEvent = _FakeIrisEvent(messenger.getSendPort());
     final NativeBindingsProvider nativeBindingsProvider =
         _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
 
@@ -302,14 +357,6 @@ void main() {
   });
 
   test('registerEventHandler 2 times', () async {
-    final _FakeNativeBindingDelegateMessenger messenger =
-        _FakeNativeBindingDelegateMessenger();
-    final _FakeNativeBindingDelegate nativeBindingDelegate =
-        _FakeNativeBindingDelegate(messenger.getSendPort());
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent();
-    final NativeBindingsProvider nativeBindingsProvider =
-        _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
-
     final irisMethodChannel = IrisMethodChannel();
     await irisMethodChannel.initilize(nativeBindingsProvider);
 
@@ -347,14 +394,6 @@ void main() {
   });
 
   test('registerEventHandler 2 times, then unregisterEventHandler', () async {
-    final _FakeNativeBindingDelegateMessenger messenger =
-        _FakeNativeBindingDelegateMessenger();
-    final _FakeNativeBindingDelegate nativeBindingDelegate =
-        _FakeNativeBindingDelegate(messenger.getSendPort());
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent();
-    final NativeBindingsProvider nativeBindingsProvider =
-        _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
-
     final irisMethodChannel = IrisMethodChannel();
     await irisMethodChannel.initilize(nativeBindingsProvider);
 
@@ -392,14 +431,6 @@ void main() {
   });
 
   test('registerEventHandler 2 times, then unregisterEventHandlers', () async {
-    final _FakeNativeBindingDelegateMessenger messenger =
-        _FakeNativeBindingDelegateMessenger();
-    final _FakeNativeBindingDelegate nativeBindingDelegate =
-        _FakeNativeBindingDelegate(messenger.getSendPort());
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent();
-    final NativeBindingsProvider nativeBindingsProvider =
-        _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
-
     final irisMethodChannel = IrisMethodChannel();
     await irisMethodChannel.initilize(nativeBindingsProvider);
 
@@ -432,5 +463,80 @@ void main() {
     expect(registerEventHandlerCallRecord.length, 2);
 
     await irisMethodChannel.dispose();
+  });
+
+  test('Should clean native resources when hot restart happen', () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+
+    irisMethodChannel.workerIsolate.kill(priority: Isolate.immediate);
+    // Delayed 1 second to ensure `irisMethodChannel.workerIsolate.kill` done
+    await Future.delayed(const Duration(seconds: 1));
+
+    final destroyNativeApiEngineCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
+    expect(destroyNativeApiEngineCallRecord.length, 1);
+
+    final destroyIrisEventHandlerCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
+    expect(destroyIrisEventHandlerCallRecord.length, 1);
+
+    final irisEventDisposeCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'IrisEvent_dispose');
+    expect(irisEventDisposeCallRecord.length, 1);
+  });
+
+  test('addHotRestartListener', () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+
+    bool hotRestartListenerCalled = false;
+    irisMethodChannel.addHotRestartListener((message) {
+      hotRestartListenerCalled = true;
+    });
+    irisMethodChannel.workerIsolate.kill(priority: Isolate.immediate);
+
+    // Delayed 1 second to ensure `irisMethodChannel.workerIsolate.kill` done
+    await Future.delayed(const Duration(seconds: 1));
+
+    expect(hotRestartListenerCalled, true);
+  });
+
+  test('removeHotRestartListener', () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+
+    bool hotRestartListenerCalled = false;
+    // ignore: prefer_function_declarations_over_variables
+    final listener = (message) {
+      hotRestartListenerCalled = true;
+    };
+    irisMethodChannel.addHotRestartListener(listener);
+    irisMethodChannel.removeHotRestartListener(listener);
+    irisMethodChannel.workerIsolate.kill(priority: Isolate.immediate);
+
+    // Delayed 1 second to ensure `irisMethodChannel.workerIsolate.kill` done
+    await Future.delayed(const Duration(seconds: 1));
+
+    expect(hotRestartListenerCalled, false);
+  });
+
+  test('removeHotRestartListener through returned VoidCallback', () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+
+    bool hotRestartListenerCalled = false;
+    // ignore: prefer_function_declarations_over_variables
+    final listener = (message) {
+      hotRestartListenerCalled = true;
+    };
+    final removeListener = irisMethodChannel.addHotRestartListener(listener);
+    removeListener();
+    irisMethodChannel.workerIsolate.kill(priority: Isolate.immediate);
+
+    // Delayed 1 second to ensure `irisMethodChannel.workerIsolate.kill` done
+    await Future.delayed(const Duration(seconds: 1));
+
+    expect(hotRestartListenerCalled, false);
   });
 }
