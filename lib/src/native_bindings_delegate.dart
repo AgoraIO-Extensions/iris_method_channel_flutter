@@ -1,4 +1,6 @@
 import 'dart:ffi' as ffi;
+import 'package:iris_method_channel/src/iris_event.dart';
+
 import 'bindings/native_iris_api_common_bindings.dart' as iris;
 import 'iris_method_channel.dart';
 
@@ -29,8 +31,15 @@ abstract class NativeBindingDelegate {
   void destroyNativeApiEngine(ffi.Pointer<ffi.Void> apiEnginePtr);
 }
 
-/// A provider for provide the [NativeBindingDelegate], which is passed to the
-/// isolate, you should not sotre any objects with type that [SendPort] not allowed.
-abstract class NativeBindingDelegateProvider {
-  NativeBindingDelegate provide();
+/// A provider for provide the ffi bindings of native implementation(such like 
+/// [NativeBindingDelegate], [IrisEvent]), which is passed to the isolate, you 
+/// should not sotre any objects with type that [SendPort] not allowed.
+abstract class NativeBindingsProvider {
+  /// Provide the implementation of [NativeBindingDelegate].
+  NativeBindingDelegate provideNativeBindingDelegate();
+
+  /// Provide the implementation of [IrisEvent].
+  IrisEvent provideIrisEvent() {
+    return IrisEvent();
+  }
 }

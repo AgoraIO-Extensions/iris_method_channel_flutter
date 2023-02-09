@@ -76,10 +76,9 @@ class NativeIrisApiRtmBindingsDelegate extends NativeBindingDelegate {
   }
 }
 
-class LegacyNativeBindingDelegateProvider
-    implements NativeBindingDelegateProvider {
+class LegacyNativeBindingDelegateProvider extends NativeBindingsProvider {
   @override
-  NativeBindingDelegate provide() {
+  NativeBindingDelegate provideNativeBindingDelegate() {
     return NativeIrisApiRtmBindingsDelegate();
   }
 }
