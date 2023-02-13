@@ -1,10 +1,32 @@
-name: Smoke build
+name: CI check
 
-on: push
+on: pull_request
 
 jobs:
+  flutter_codestyle_check:
+    name: pub.dev scores check
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: axel-op/dart-package-analyzer@v3
+        id: analysis
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check scores
+        env:
+          TOTAL: ${{ steps.analysis.outputs.total }}
+          TOTAL_MAX: ${{ steps.analysis.outputs.total_max }}
+        run: |
+          if (( $TOTAL < 120 ))
+          then
+            echo Pub Score too low.
+            exit 1
+          fi 
+
   build_windows:
     name: Build Windows
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
         version: ['2.10.5', '3.0.0', '3.3.9']
@@ -24,6 +46,7 @@ jobs:
 
   build_ios:
     name: Build iOS
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
         version: ['2.10.5', '3.0.0', '3.3.9']
@@ -41,6 +64,7 @@ jobs:
 
   build_macos:
     name: Build macOS
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
         version: ['2.10.5', '3.0.0', '3.3.9']
@@ -59,6 +83,7 @@ jobs:
 
   build_android_windows:
     name: Build Android on Windows
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
         version: ['2.10.5', '3.0.0', '3.3.9']
@@ -78,6 +103,7 @@ jobs:
 
   build_android_ubuntu:
     name: Build Android on Ubuntu
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
         version: ['2.10.5', '3.0.0', '3.3.9']
@@ -94,3 +120,21 @@ jobs:
       - name: Run flutter build apk
         run: flutter build apk
         working-directory: example
+
+  run_flutter_unit_test:
+    name: Run flutter unit test
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    strategy:
+      matrix:
+        version: ['2.10.5', '3.0.0', '3.3.9']
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - uses: subosito/flutter-action@v1
+        with:
+          flutter-version: ${{ matrix.version }}
+      - run: flutter packages get
+      - run: flutter test
