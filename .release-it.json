@@ -1,8 +1,4 @@
 {
-  "git": {
-    "commitMessage": "chore: release ${version}",
-    "tag": false
-  },
   "plugins": {
     "@release-it/conventional-changelog": {
       "preset": "angular",
