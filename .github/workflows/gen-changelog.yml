@@ -1,0 +1,59 @@
+name: Generate CHANGELOG.md
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: The branch to be released
+        type: string
+        required: true
+        default: 'main'
+
+      version:
+        description: 'The version to be released'
+        required: true
+        type: string
+
+jobs:
+  publishing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.release_branch }}
+          fetch-depth: 0
+      - name: git config
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+      - run: npm install
+      - run: npm run release ${{ inputs.version }} --ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get current version of pubspec.yaml
+        id: pubspec
+        run: |
+          PUBSPEC_VERSION=$(grep 'version: ' pubspec.yaml | sed -e 's,.*: \(.*\),\1,')
+          echo "pubspec version: ${PUBSPEC_VERSION}"
+          echo "{version}=${PUBSPEC_VERSION}" >> $GITHUB_OUTPUT
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: release ${{ inputs.version }}"
+          committer: GitHub <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: auto-release-${{ inputs.version }}
+          base: main
+          delete-branch: true
+          title: "chore: release ${{ inputs.version }}"
+          body: |
+            Releasing ${{ inputs.version }}
+
+            *This pull request is opened by bot*
+          labels: |
+            ci:skip
+          reviewers: |
+            littleGnAl
