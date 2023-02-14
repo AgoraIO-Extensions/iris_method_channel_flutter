@@ -47,7 +47,7 @@ class CallApiResult {
   final String rawData;
 }
 
-class _EventHandlerHolderKey {
+class _EventHandlerHolderKey implements ScopedKey {
   const _EventHandlerHolderKey({
     required this.registerName,
     required this.unregisterName,
@@ -270,15 +270,26 @@ class IrisMethodChannel {
       final eventMessage = IrisEvent.parseMessage(message);
 
       bool handled = false;
-      for (final es in scopedEventHandlers.values) {
-        final EventHandlerHolder eh = es as EventHandlerHolder;
-        for (final e in eh.getEventHandlers()) {
-          if (e.handleEvent(
-              eventMessage.event, eventMessage.data, eventMessage.buffers)) {
-            handled = true;
+      for (final sub in scopedEventHandlers.values) {
+        final scopedObjects = sub as DisposableScopedObjects;
+        for (final es in scopedObjects.values) {
+          final EventHandlerHolder eh = es as EventHandlerHolder;
+          // We need the event handlers with the same _EventHandlerHolderKey consume the message.
+          for (final e in eh.getEventHandlers()) {
+            if (e.handleEvent(
+                eventMessage.event, eventMessage.data, eventMessage.buffers)) {
+              handled = true;
+            }
+          }
+
+          // Break the loop after the event handlers in the same EventHandlerHolder
+          // consume the message.
+          if (handled) {
+            break;
           }
         }
 
+        // Break the loop if there is an EventHandlerHolder consume the message.
         if (handled) {
           break;
         }
@@ -305,8 +316,14 @@ class IrisMethodChannel {
 
   Future<CallApiResult> registerEventHandler(
       ScopedEvent scopedEvent, String params) async {
-    final EventHandlerHolder holder = scopedEventHandlers.putIfAbsent(
-        scopedEvent.scopedKey,
+    final DisposableScopedObjects subScopedObjects = scopedEventHandlers
+        .putIfAbsent(scopedEvent.scopedKey, () => DisposableScopedObjects());
+    final eventKey = _EventHandlerHolderKey(
+      registerName: scopedEvent.registerName,
+      unregisterName: scopedEvent.unregisterName,
+    );
+    final EventHandlerHolder holder = subScopedObjects.putIfAbsent(
+        eventKey,
         () => EventHandlerHolder(
               key: _EventHandlerHolderKey(
                 registerName: scopedEvent.registerName,
@@ -317,7 +334,7 @@ class IrisMethodChannel {
     late CallApiResult result;
     if (holder.getEventHandlers().isEmpty) {
       result = await messenger.send(_CreateNativeEventHandlerRequest(
-          IrisMethodCall(scopedEvent.registerName, params)));
+          IrisMethodCall(eventKey.registerName, params)));
 
       final nativeEventHandlerIntPtr = result.data['observerIntPtr']!;
       holder.nativeEventHandlerIntPtr = nativeEventHandlerIntPtr;
@@ -332,8 +349,13 @@ class IrisMethodChannel {
 
   Future<CallApiResult> unregisterEventHandler(
       ScopedEvent scopedEvent, String params) async {
-    final EventHandlerHolder? holder =
+    final DisposableScopedObjects? subScopedObjects =
         scopedEventHandlers.get(scopedEvent.scopedKey);
+    final eventKey = _EventHandlerHolderKey(
+      registerName: scopedEvent.registerName,
+      unregisterName: scopedEvent.unregisterName,
+    );
+    final EventHandlerHolder? holder = subScopedObjects?.get(eventKey);
     late CallApiResult result;
     if (holder != null) {
       holder.removeEventHandler(scopedEvent.handler);
@@ -346,7 +368,11 @@ class IrisMethodChannel {
           ),
         ));
 
-        scopedEventHandlers.remove(scopedEvent.scopedKey);
+        subScopedObjects?.remove(eventKey);
+
+        if (subScopedObjects?.keys.isEmpty == true) {
+          scopedEventHandlers.remove(scopedEvent.scopedKey);
+        }
 
         return result;
       }
@@ -357,23 +383,31 @@ class IrisMethodChannel {
   }
 
   Future<void> unregisterEventHandlers(TypedScopedKey scopedKey) async {
-    final EventHandlerHolder? holder = scopedEventHandlers.remove(scopedKey);
-    if (holder != null) {
-      final methodCalls = holder
-          .getEventHandlers()
-          .map((e) => IrisMethodCall(
-                holder.key.unregisterName,
-                '',
-                rawBufferParams: [
-                  BufferParam(holder.nativeEventHandlerIntPtr, 1)
-                ],
-              ))
-          .toList();
+    final DisposableScopedObjects? subScopedObjects =
+        scopedEventHandlers.remove(scopedKey);
+    if (subScopedObjects != null) {
+      for (final eventKey in subScopedObjects.keys) {
+        final EventHandlerHolder? holder = subScopedObjects.get(eventKey);
+        if (holder != null) {
+          final methodCalls = holder
+              .getEventHandlers()
+              .map((e) => IrisMethodCall(
+                    holder.key.unregisterName,
+                    '',
+                    rawBufferParams: [
+                      BufferParam(holder.nativeEventHandlerIntPtr, 1)
+                    ],
+                  ))
+              .toList();
 
-      await messenger
-          .listSend(_DestroyNativeEventHandlerListRequest(methodCalls));
+          await messenger
+              .listSend(_DestroyNativeEventHandlerListRequest(methodCalls));
 
-      await holder.dispose();
+          await holder.dispose();
+        }
+      }
+
+      await subScopedObjects.dispose();
     }
   }
 
