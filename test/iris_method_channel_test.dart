@@ -264,8 +264,12 @@ void main() {
             handler: eventHandler),
         jsonEncode({}));
 
-    final holder =
-        irisMethodChannel.scopedEventHandlers.get(key) as EventHandlerHolder;
+    final DisposableScopedObjects subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key)!;
+    expect(subScopedObjects.keys.length, 1);
+
+    final holder = subScopedObjects.values.elementAt(0) as EventHandlerHolder;
+
     expect(holder.nativeEventHandlerIntPtr, 123456);
 
     expect(holder.getEventHandlers().length, 1);
@@ -309,9 +313,9 @@ void main() {
             handler: eventHandler),
         jsonEncode({}));
 
-    final holder =
-        irisMethodChannel.scopedEventHandlers.get(key) as EventHandlerHolder?;
-    expect(holder, isNull);
+    final DisposableScopedObjects? subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key);
+    expect(subScopedObjects, isNull);
 
     final registerEventHandlerCallRecord = messenger.callApiRecords
         .where((e) => e.methodCall.funcName == 'unregisterEventHandler');
@@ -345,9 +349,9 @@ void main() {
         jsonEncode({}));
     await irisMethodChannel.unregisterEventHandlers(key);
 
-    final holder =
-        irisMethodChannel.scopedEventHandlers.get(key) as EventHandlerHolder?;
-    expect(holder, isNull);
+    final DisposableScopedObjects? subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key);
+    expect(subScopedObjects, isNull);
 
     final registerEventHandlerCallRecord = messenger.callApiRecords
         .where((e) => e.methodCall.funcName == 'unregisterEventHandler');
@@ -378,8 +382,12 @@ void main() {
             handler: eventHandler2),
         jsonEncode({}));
 
-    final holder =
-        irisMethodChannel.scopedEventHandlers.get(key) as EventHandlerHolder;
+    final DisposableScopedObjects subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key)!;
+    expect(subScopedObjects.keys.length, 1);
+
+    final holder = subScopedObjects.values.elementAt(0) as EventHandlerHolder;
+
     expect(holder.nativeEventHandlerIntPtr, 123456);
 
     expect(holder.getEventHandlers().length, 2);
@@ -389,6 +397,55 @@ void main() {
     final registerEventHandlerCallRecord = messenger.callApiRecords
         .where((e) => e.methodCall.funcName == 'registerEventHandler');
     expect(registerEventHandlerCallRecord.length, 1);
+
+    await irisMethodChannel.dispose();
+  });
+
+  test('registerEventHandler 2 times with different registerName', () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+
+    const key = TypedScopedKey(_TestEventLoopEventHandler);
+    final eventHandler1 = _TestEventLoopEventHandler();
+    final eventHandler2 = _TestEventLoopEventHandler();
+    await irisMethodChannel.registerEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler1),
+        jsonEncode({}));
+    await irisMethodChannel.registerEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler1',
+            unregisterName: 'unregisterEventHandler1',
+            handler: eventHandler2),
+        jsonEncode({}));
+
+    final DisposableScopedObjects subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key)!;
+    expect(subScopedObjects.keys.length, 2);
+
+    final holder = subScopedObjects.values.elementAt(0) as EventHandlerHolder;
+    expect(holder.nativeEventHandlerIntPtr, 123456);
+
+    expect(holder.getEventHandlers().length, 1);
+    expect(holder.getEventHandlers().elementAt(0), eventHandler1);
+
+    final holder2 = subScopedObjects.values.elementAt(1) as EventHandlerHolder;
+    expect(holder2.nativeEventHandlerIntPtr, 123456);
+
+    expect(holder2.getEventHandlers().length, 1);
+    expect(holder2.getEventHandlers().elementAt(0), eventHandler2);
+
+    final registerEventHandlerCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'registerEventHandler');
+    expect(registerEventHandlerCallRecord.length, 1);
+
+    final registerEventHandlerCallRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'registerEventHandler1');
+    expect(registerEventHandlerCallRecord1.length, 1);
 
     await irisMethodChannel.dispose();
   });
@@ -415,17 +472,78 @@ void main() {
             handler: eventHandler2),
         jsonEncode({}));
 
-    final holder =
-        irisMethodChannel.scopedEventHandlers.get(key) as EventHandlerHolder;
+    await irisMethodChannel.unregisterEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler2),
+        jsonEncode({}));
+
+    final DisposableScopedObjects subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key)!;
+    expect(subScopedObjects.keys.length, 1);
+
+    final holder = subScopedObjects.values.elementAt(0) as EventHandlerHolder;
+
     expect(holder.nativeEventHandlerIntPtr, 123456);
 
-    expect(holder.getEventHandlers().length, 2);
+    expect(holder.getEventHandlers().length, 1);
     expect(holder.getEventHandlers().elementAt(0), eventHandler1);
-    expect(holder.getEventHandlers().elementAt(1), eventHandler2);
 
-    final registerEventHandlerCallRecord = messenger.callApiRecords
-        .where((e) => e.methodCall.funcName == 'registerEventHandler');
-    expect(registerEventHandlerCallRecord.length, 1);
+    final unregisterEventHandlerCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'unregisterEventHandler');
+    expect(unregisterEventHandlerCallRecord.length, 0);
+
+    await irisMethodChannel.dispose();
+  });
+
+  test(
+      'registerEventHandler 2 times with different registerName, then unregisterEventHandler',
+      () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+
+    const key = TypedScopedKey(_TestEventLoopEventHandler);
+    final eventHandler1 = _TestEventLoopEventHandler();
+    final eventHandler2 = _TestEventLoopEventHandler();
+    await irisMethodChannel.registerEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler1),
+        jsonEncode({}));
+    await irisMethodChannel.registerEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler1',
+            unregisterName: 'unregisterEventHandler1',
+            handler: eventHandler2),
+        jsonEncode({}));
+
+    await irisMethodChannel.unregisterEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler1',
+            unregisterName: 'unregisterEventHandler1',
+            handler: eventHandler2),
+        jsonEncode({}));
+
+    final DisposableScopedObjects subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key)!;
+    expect(subScopedObjects.keys.length, 1);
+
+    final holder = subScopedObjects.values.elementAt(0) as EventHandlerHolder;
+
+    expect(holder.nativeEventHandlerIntPtr, 123456);
+
+    expect(holder.getEventHandlers().length, 1);
+    expect(holder.getEventHandlers().elementAt(0), eventHandler1);
+
+    final unregisterEventHandlerCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'unregisterEventHandler1');
+    expect(unregisterEventHandlerCallRecord.length, 1);
 
     await irisMethodChannel.dispose();
   });
@@ -454,13 +572,54 @@ void main() {
 
     await irisMethodChannel.unregisterEventHandlers(key);
 
-    final holder =
-        irisMethodChannel.scopedEventHandlers.get(key) as EventHandlerHolder?;
-    expect(holder, isNull);
+    final DisposableScopedObjects? subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key);
+    expect(subScopedObjects, isNull);
 
     final registerEventHandlerCallRecord = messenger.callApiRecords
         .where((e) => e.methodCall.funcName == 'unregisterEventHandler');
     expect(registerEventHandlerCallRecord.length, 2);
+
+    await irisMethodChannel.dispose();
+  });
+
+  test(
+      'registerEventHandler 2 times with different registerName, then unregisterEventHandlers',
+      () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+
+    const key = TypedScopedKey(_TestEventLoopEventHandler);
+    final eventHandler1 = _TestEventLoopEventHandler();
+    final eventHandler2 = _TestEventLoopEventHandler();
+    await irisMethodChannel.registerEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler1),
+        jsonEncode({}));
+    await irisMethodChannel.registerEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler1',
+            unregisterName: 'unregisterEventHandler1',
+            handler: eventHandler2),
+        jsonEncode({}));
+
+    await irisMethodChannel.unregisterEventHandlers(key);
+
+    final DisposableScopedObjects? subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key);
+    expect(subScopedObjects, isNull);
+
+    final registerEventHandlerCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'unregisterEventHandler');
+    expect(registerEventHandlerCallRecord.length, 1);
+
+    final registerEventHandlerCallRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'unregisterEventHandler1');
+    expect(registerEventHandlerCallRecord1.length, 1);
 
     await irisMethodChannel.dispose();
   });
