@@ -238,9 +238,9 @@ class _HotRestartFinalizer {
       listener(msg);
     }
 
-    // When hot restart happen, the `IrisMethodChannel.dispose` function will not 
+    // When hot restart happen, the `IrisMethodChannel.dispose` function will not
     // be called normally, cause the native API engine can not be destroy correctly,
-    // so we need to release the native resources which create by the 
+    // so we need to release the native resources which create by the
     // `NativeBindingDelegate` explicitly.
     final nativeBindingDelegate = provider.provideNativeBindingDelegate();
     nativeBindingDelegate.initialize();

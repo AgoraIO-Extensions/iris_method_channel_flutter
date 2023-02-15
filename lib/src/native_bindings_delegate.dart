@@ -31,8 +31,8 @@ abstract class NativeBindingDelegate {
   void destroyNativeApiEngine(ffi.Pointer<ffi.Void> apiEnginePtr);
 }
 
-/// A provider for provide the ffi bindings of native implementation(such like 
-/// [NativeBindingDelegate], [IrisEvent]), which is passed to the isolate, you 
+/// A provider for provide the ffi bindings of native implementation(such like
+/// [NativeBindingDelegate], [IrisEvent]), which is passed to the isolate, you
 /// should not sotre any objects with type that [SendPort] not allowed.
 abstract class NativeBindingsProvider {
   /// Provide the implementation of [NativeBindingDelegate].
