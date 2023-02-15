@@ -36,6 +36,9 @@ jobs:
           cache: true
           cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:' # optional, change this to force refresh cache
           cache-path: '${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:' # optional, change this to specify the cache path
+      - run: |
+        echo ${HOME}
+        ls ${HOME}/.pub-cache
       - run: dart pub publish --dry-run
 
   build_windows:
