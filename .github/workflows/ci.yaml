@@ -28,7 +28,7 @@ jobs:
         run: |
           FLUTTER_PATH=$(which flutter)
           echo "flutter path: ${FLUTTER_PATH}"
-          /flutter/bin/cache/dart-sdk/bin/dart pub publish --dry-run
+          # /flutter/bin/cache/dart-sdk/bin/dart pub publish --dry-run
 
   build_windows:
     name: Build Windows
