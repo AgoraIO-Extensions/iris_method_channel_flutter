@@ -23,14 +23,13 @@ jobs:
             echo Pub Score too low.
             exit 1
           fi
+      - name: Check dart pub publish --dry-run
+        shell: bash
+        # The dart bin path /flutter/bin/cache/dart-sdk/bin/dart is from action axel-op/dart-package-analyzer
+        run: |
           FLUTTER_PATH=$(which flutter)
           echo "flutter path: ${FLUTTER_PATH}"
-      # - name: Check dart pub publish --dry-run
-      #   # The dart bin path /flutter/bin/cache/dart-sdk/bin/dart is from action axel-op/dart-package-analyzer
-      #   run: |
-      #     FLUTTER_PATH=$(which flutter)
-      #     echo "flutter path: ${FLUTTER_PATH}"
-      #     # /flutter/bin/cache/dart-sdk/bin/dart pub publish --dry-run
+          # /flutter/bin/cache/dart-sdk/bin/dart pub publish --dry-run
 
   build_windows:
     name: Build Windows
