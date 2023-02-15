@@ -24,7 +24,8 @@ jobs:
             exit 1
           fi
       - name: Check dart pub publish --dry-run
-        run: dart pub publish --dry-run
+        # The dart bin path /flutter/bin/cache/dart-sdk/bin/dart is from action axel-op/dart-package-analyzer
+        run: /flutter/bin/cache/dart-sdk/bin/dart pub publish --dry-run
 
   build_windows:
     name: Build Windows
