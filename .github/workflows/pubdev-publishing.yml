@@ -1,9 +1,13 @@
 name: Publish to Pub.dev 🚀
 
-# on:
-#   release:
-#     types: [published]
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: The branch to be released
+        type: string
+        required: true
+        default: 'main'
 
 jobs:
   publishing:
@@ -11,6 +15,8 @@ jobs:
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v3
+          with:
+            ref: ${{ inputs.release_branch }}
       - name: Get tags
         run: git fetch --tags origin
       - name: Check Versions 🔎
