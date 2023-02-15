@@ -4,10 +4,11 @@ import 'dart:ffi' as ffi;
 import 'dart:isolate';
 import 'dart:typed_data';
 import 'package:async/async.dart';
+import 'package:meta/meta.dart';
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart'
-    show SynchronousFuture, VoidCallback, debugPrint, visibleForTesting;
+    show SynchronousFuture, VoidCallback, debugPrint;
 import 'package:iris_method_channel/src/iris_event.dart';
 import 'package:iris_method_channel/src/native_bindings_delegate.dart';
 import 'package:iris_method_channel/src/scoped_objects.dart';
