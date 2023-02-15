@@ -23,13 +23,20 @@ jobs:
             echo Pub Score too low.
             exit 1
           fi
-      - name: Check dart pub publish --dry-run
-        shell: bash
-        # The dart bin path /flutter/bin/cache/dart-sdk/bin/dart is from action axel-op/dart-package-analyzer
-        run: |
-          FLUTTER_PATH=$(which flutter)
-          echo "flutter path: ${FLUTTER_PATH}"
-          # /flutter/bin/cache/dart-sdk/bin/dart pub publish --dry-run
+
+  pub_publish_check:
+    name: pub publish check
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.7.0'
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:' # optional, change this to force refresh cache
+          cache-path: ${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch: # optional, change this to specify the cache path
+      - run: dart pub publish --dry-run
 
   build_windows:
     name: Build Windows
