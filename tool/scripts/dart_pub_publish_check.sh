@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 # The log of `dart pub publish`` will be written into `${PUB_CACHE}/log/pub_log.txt`
 dart pub publish --dry-run --verbose
 
