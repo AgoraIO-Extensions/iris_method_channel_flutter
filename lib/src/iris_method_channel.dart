@@ -548,12 +548,6 @@ class IrisMethodChannel {
           ),
         ));
 
-        subScopedObjects?.remove(eventKey);
-
-        if (subScopedObjects?.keys.isEmpty == true) {
-          scopedEventHandlers.remove(scopedEvent.scopedKey);
-        }
-
         return result;
       }
     }
