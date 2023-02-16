@@ -18,11 +18,25 @@ jobs:
           TOTAL: ${{ steps.analysis.outputs.total }}
           TOTAL_MAX: ${{ steps.analysis.outputs.total_max }}
         run: |
-          if (( $TOTAL < 120 ))
+          if (( $TOTAL < 130 ))
           then
             echo Pub Score too low.
             exit 1
-          fi 
+          fi
+
+  pub_publish_check:
+    name: pub publish check
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.7.0'
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:' # optional, change this to force refresh cache
+          cache-path: '${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:' # optional, change this to specify the cache path
+      - run: bash tool/scripts/dart_pub_publish_check.sh
 
   build_windows:
     name: Build Windows

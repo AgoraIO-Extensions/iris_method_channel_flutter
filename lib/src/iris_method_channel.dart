@@ -4,11 +4,10 @@ import 'dart:ffi' as ffi;
 import 'dart:isolate';
 import 'dart:typed_data';
 import 'package:async/async.dart';
-import 'package:meta/meta.dart';
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart'
-    show SynchronousFuture, VoidCallback, debugPrint;
+    show SynchronousFuture, VoidCallback, debugPrint, visibleForTesting;
 import 'package:iris_method_channel/src/iris_event.dart';
 import 'package:iris_method_channel/src/native_bindings_delegate.dart';
 import 'package:iris_method_channel/src/scoped_objects.dart';
@@ -238,9 +237,9 @@ class _HotRestartFinalizer {
       listener(msg);
     }
 
-    // When hot restart happen, the `IrisMethodChannel.dispose` function will not 
+    // When hot restart happen, the `IrisMethodChannel.dispose` function will not
     // be called normally, cause the native API engine can not be destroy correctly,
-    // so we need to release the native resources which create by the 
+    // so we need to release the native resources which create by the
     // `NativeBindingDelegate` explicitly.
     final nativeBindingDelegate = provider.provideNativeBindingDelegate();
     nativeBindingDelegate.initialize();
