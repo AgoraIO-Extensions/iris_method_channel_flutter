@@ -2,17 +2,19 @@
 
 set -x
 
-dart pub publish --dry-run --verbose > log.txt
-FILE_PATH=$(grep 'MSG : Logs written to' log.txt)
-if [[ ${FILE_PATH} =~ "(/[^/]*)+/" ]]; then echo ${BASH_REMATCH[1]}; fi
-echo "FILE_PATH: ${FILE_PATH}"
+# The log of `dart pub publish`` will be written into `${PUB_CACHE}/log/pub_log.txt`
+dart pub publish --dry-run --verbose
 
-# egrep '^\.{1,2}(/.*[^/])?$'
+if [[ ! -f "${PUB_CACHE}/log/pub_log.txt" ]]; then
+    echo "The ${PUB_CACHE}/log/pub_log.txt is not exist."
+    exit 1
+fi
 
-# ERROR=$(dart pub publish --dry-run 2> /dev/null | grep error)
-# # BB=$(echo ${ERROR} | grep -e error)
-# # | grep 'error'
+RET=$(grep 'ERR' ${PUB_CACHE}/log/pub_log.txt)
 
-# echo ${ERROR}
+if [[ ! -z $RET ]]; then 
+  echo "There are some ERR when run the `dart pub publish --dry-run`, please check the log."
+  exit 1
+fi
 
 exit 0
