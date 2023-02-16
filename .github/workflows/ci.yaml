@@ -47,7 +47,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v1
@@ -67,7 +67,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
     runs-on: macos-11
     timeout-minutes: 60
     steps:
@@ -85,7 +85,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
     runs-on: macos-11
     timeout-minutes: 60
     steps:
@@ -104,7 +104,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v1
@@ -124,7 +124,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -144,7 +144,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
