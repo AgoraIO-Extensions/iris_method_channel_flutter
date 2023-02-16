@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0-rc.2](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.1...1.1.0-rc.2) (2023-02-16)
+
+
+### Bug Fixes
+
+* fix ConcurrentModificationError when  and  are called ynchronously but without  keyword ([4f5058d](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/4f5058d70224c8072cc8706adb4761b28cebd8fc))
+
 ## [1.1.0-rc.1](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.0.0...1.1.0-rc.1) (2023-02-16)
 
 
