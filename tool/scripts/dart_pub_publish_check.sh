@@ -11,6 +11,8 @@ fi
 RET=$(grep 'ERR' ${PUB_CACHE}/log/pub_log.txt)
 
 if [[ ! -z $RET ]]; then 
+  echo "\n"
+  echo "=================================== ERR ============================================="
   echo "There are some ERR when run the \`dart pub publish --dry-run\`, please check the log."
   exit 1
 fi
