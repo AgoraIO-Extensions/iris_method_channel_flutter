@@ -23,7 +23,7 @@ android_build_task:
     - git fetch
     - git checkout ${FLUTTER_VERSION} && flutter precache
 
-    matrix:
+  matrix:
     - name: Build android on macos arm
       build_android_arm64_script:
         - cd example
