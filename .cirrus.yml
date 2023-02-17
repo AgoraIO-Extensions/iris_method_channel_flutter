@@ -1,5 +1,4 @@
 environment:
-  TEST_APP_ID: ENCRYPTED[!9f287ddc756b7c12b282fa965f66f0c957b193154a0e08436eef3befb926b91355c86f28938fd836977fdee4a336ccce!]
   # The flutter sdk is located in /Users/admin/flutter by default in cirrus cis
   MACOS_HOST_FLUTTER_SDK_DIR: /Users/admin/flutter
 
