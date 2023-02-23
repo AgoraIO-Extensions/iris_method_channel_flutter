@@ -198,8 +198,8 @@ class _HotRestartFinalizer {
 
   final List<HotRestartListener> _hotRestartListeners = [];
 
-  late final ReceivePort? _onExitPort;
-  late final StreamSubscription? _onExitSubscription;
+  ReceivePort? _onExitPort;
+  StreamSubscription? _onExitSubscription;
 
   SendPort? get onExitSendPort => _onExitPort?.sendPort;
 
