@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0-rc.3](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.2...1.1.0-rc.3) (2023-02-23)
+
+
+### Bug Fixes
+
+* [windows] fix warning C4068: unknown pragma 'clang' ([f26cdba](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/f26cdba2bfebcce9f2ed5ce25468aa6427ea400f))
+* fix _HotRestartFinalizer._onExitPort not be initialized in release build ([ea5f4cb](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/ea5f4cbd925e79c229d7f4013cce5d649d256990))
+
 ## [1.1.0-rc.2](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.1...1.1.0-rc.2) (2023-02-16)
 
 
