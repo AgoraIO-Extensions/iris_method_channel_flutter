@@ -250,6 +250,32 @@ void main() {
     await irisMethodChannel.dispose();
   });
 
+  test('invokeMethodList', () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+    const methodCalls = [
+      IrisMethodCall('a_func_name', 'params'),
+      IrisMethodCall('a_func_name2', 'params')
+    ];
+    final callApiResult = await irisMethodChannel.invokeMethodList(methodCalls);
+
+    final callRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'a_func_name');
+    expect(callRecord1.length, 1);
+
+    final callRecord2 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'a_func_name2');
+    expect(callRecord2.length, 1);
+
+    expect(callApiResult[0].irisReturnCode, 0);
+    expect(callApiResult[0].data, {});
+
+    expect(callApiResult[1].irisReturnCode, 0);
+    expect(callApiResult[1].data, {});
+
+    await irisMethodChannel.dispose();
+  });
+
   test('registerEventHandler', () async {
     final irisMethodChannel = IrisMethodChannel();
     await irisMethodChannel.initilize(nativeBindingsProvider);

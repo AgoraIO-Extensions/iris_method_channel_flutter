@@ -485,6 +485,14 @@ class IrisMethodChannel {
     return result;
   }
 
+  Future<List<CallApiResult>> invokeMethodList(
+      List<IrisMethodCall> methodCalls) async {
+    final List<CallApiResult> result =
+        await messenger.listSend(_ApiCallListRequest(methodCalls));
+
+    return result;
+  }
+
   Future<void> dispose() async {
     if (!_initilized) return;
     _hotRestartFinalizer.dispose();
