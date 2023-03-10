@@ -390,6 +390,146 @@ void main() {
     await irisMethodChannel.dispose();
   });
 
+  test('invokeMethod after disposed', () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.dispose();
+    final callApiResult = await irisMethodChannel
+        .invokeMethod(const IrisMethodCall('a_func_name', 'params'));
+    final callRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'a_func_name');
+    expect(callRecord1.length, 0);
+
+    expect(callApiResult.irisReturnCode, kDisposedIrisMethodCallReturnCode);
+    expect(callApiResult.data, kDisposedIrisMethodCallData);
+  });
+
+  test('invokeMethodList after disposed', () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.dispose();
+    const methodCalls = [
+      IrisMethodCall('a_func_name', 'params'),
+      IrisMethodCall('a_func_name2', 'params')
+    ];
+
+    final callApiResult = await irisMethodChannel.invokeMethodList(methodCalls);
+
+    final callRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'a_func_name');
+    expect(callRecord1.length, 0);
+
+    final callRecord2 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'a_func_name2');
+    expect(callRecord2.length, 0);
+
+    expect(callApiResult[0].irisReturnCode, kDisposedIrisMethodCallReturnCode);
+    expect(callApiResult[0].data, kDisposedIrisMethodCallData);
+
+    expect(callApiResult[1].irisReturnCode, kDisposedIrisMethodCallReturnCode);
+    expect(callApiResult[1].data, kDisposedIrisMethodCallData);
+  });
+
+  test('registerEventHandler after disposed', () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.dispose();
+
+    const key = TypedScopedKey(_TestEventLoopEventHandler);
+    final eventHandler = _TestEventLoopEventHandler();
+    await irisMethodChannel.registerEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler),
+        jsonEncode({}));
+
+    final DisposableScopedObjects? subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key);
+    expect(subScopedObjects, isNull);
+
+    final registerEventHandlerCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'registerEventHandler');
+    expect(registerEventHandlerCallRecord.length, 0);
+  });
+
+  test('unregisterEventHandler after disposed', () async {
+    final _FakeNativeBindingDelegateMessenger messenger =
+        _FakeNativeBindingDelegateMessenger();
+    final _FakeNativeBindingDelegate nativeBindingDelegate =
+        _FakeNativeBindingDelegate(
+      messenger.getSendPort(),
+    );
+    final _FakeIrisEvent irisEvent = _FakeIrisEvent(messenger.getSendPort());
+    final NativeBindingsProvider nativeBindingsProvider =
+        _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
+
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.dispose();
+
+    const key = TypedScopedKey(_TestEventLoopEventHandler);
+    final eventHandler = _TestEventLoopEventHandler();
+    await irisMethodChannel.registerEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler),
+        jsonEncode({}));
+    await irisMethodChannel.unregisterEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler),
+        jsonEncode({}));
+
+    final DisposableScopedObjects? subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key);
+    expect(subScopedObjects, isNull);
+
+    final registerEventHandlerCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'unregisterEventHandler');
+    expect(registerEventHandlerCallRecord.length, 0);
+  });
+
+  test('unregisterEventHandlers after disposed', () async {
+    final _FakeNativeBindingDelegateMessenger messenger =
+        _FakeNativeBindingDelegateMessenger();
+    final _FakeNativeBindingDelegate nativeBindingDelegate =
+        _FakeNativeBindingDelegate(
+      messenger.getSendPort(),
+    );
+    final _FakeIrisEvent irisEvent = _FakeIrisEvent(messenger.getSendPort());
+    final NativeBindingsProvider nativeBindingsProvider =
+        _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
+
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.dispose();
+
+    const key = TypedScopedKey(_TestEventLoopEventHandler);
+    final eventHandler = _TestEventLoopEventHandler();
+    await irisMethodChannel.registerEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler),
+        jsonEncode({}));
+    await irisMethodChannel.unregisterEventHandlers(key);
+
+    final DisposableScopedObjects? subScopedObjects =
+        irisMethodChannel.scopedEventHandlers.get(key);
+    expect(subScopedObjects, isNull);
+
+    final registerEventHandlerCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'unregisterEventHandler');
+    expect(registerEventHandlerCallRecord.length, 0);
+  });
+
   test('registerEventHandler 2 times', () async {
     final irisMethodChannel = IrisMethodChannel();
     await irisMethodChannel.initilize(nativeBindingsProvider);

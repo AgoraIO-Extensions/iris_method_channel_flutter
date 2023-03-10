@@ -34,6 +34,8 @@ class IrisMethodCall {
 }
 
 const int kBasicResultLength = 64 * 1024;
+const int kDisposedIrisMethodCallReturnCode = 1000;
+const Map<String, int> kDisposedIrisMethodCallData = {'result': 0};
 
 class CallApiResult {
   CallApiResult(
@@ -120,22 +122,37 @@ void freePointer(ffi.Pointer<ffi.Void> ptr) {
 }
 
 class _Messenger implements DisposableObject {
-  const _Messenger(this.requestPort, this.responseQueue);
+  _Messenger(this.requestPort, this.responseQueue);
   final SendPort requestPort;
   final StreamQueue<dynamic> responseQueue;
+  bool _isDisposed = false;
 
   Future<CallApiResult> send(_Request request) async {
+    if (_isDisposed) {
+      return CallApiResult(
+          irisReturnCode: kDisposedIrisMethodCallReturnCode,
+          data: kDisposedIrisMethodCallData);
+    }
     requestPort.send(request);
     return await responseQueue.next;
   }
 
   Future<List<CallApiResult>> listSend(_Request request) async {
+    if (_isDisposed) {
+      return [
+        CallApiResult(
+            irisReturnCode: kDisposedIrisMethodCallReturnCode,
+            data: kDisposedIrisMethodCallData)
+      ];
+    }
     requestPort.send(request);
     return await responseQueue.next;
   }
 
   @override
   Future<void> dispose() async {
+    if (!_isDisposed) return;
+    _isDisposed = true;
     requestPort.send(null);
     await responseQueue.cancel();
   }
@@ -446,6 +463,10 @@ class IrisMethodChannel {
     messenger = _Messenger(requestPort, responseQueue);
 
     evntSubscription = eventPort.listen((message) {
+      if (!_initilized) {
+        return;
+      }
+
       final eventMessage = IrisEvent.parseMessage(message);
 
       bool handled = false;
@@ -479,6 +500,11 @@ class IrisMethodChannel {
   }
 
   Future<CallApiResult> invokeMethod(IrisMethodCall methodCall) async {
+    if (!_initilized) {
+      return CallApiResult(
+          irisReturnCode: kDisposedIrisMethodCallReturnCode,
+          data: kDisposedIrisMethodCallData);
+    }
     final CallApiResult result =
         await messenger.send(_ApiCallRequest(methodCall));
 
@@ -487,6 +513,14 @@ class IrisMethodChannel {
 
   Future<List<CallApiResult>> invokeMethodList(
       List<IrisMethodCall> methodCalls) async {
+    if (!_initilized) {
+      return methodCalls
+          .map((e) => CallApiResult(
+              irisReturnCode: kDisposedIrisMethodCallReturnCode,
+              data: kDisposedIrisMethodCallData))
+          .toList();
+    }
+
     final List<CallApiResult> result =
         await messenger.listSend(_ApiCallListRequest(methodCalls));
 
@@ -495,6 +529,7 @@ class IrisMethodChannel {
 
   Future<void> dispose() async {
     if (!_initilized) return;
+    _initilized = false;
     _hotRestartFinalizer.dispose();
     await scopedEventHandlers.clear();
     await evntSubscription.cancel();
@@ -504,6 +539,12 @@ class IrisMethodChannel {
 
   Future<CallApiResult> registerEventHandler(
       ScopedEvent scopedEvent, String params) async {
+    if (!_initilized) {
+      return CallApiResult(
+          irisReturnCode: kDisposedIrisMethodCallReturnCode,
+          data: kDisposedIrisMethodCallData);
+    }
+
     final DisposableScopedObjects subScopedObjects = scopedEventHandlers
         .putIfAbsent(scopedEvent.scopedKey, () => DisposableScopedObjects());
     final eventKey = _EventHandlerHolderKey(
@@ -537,6 +578,12 @@ class IrisMethodChannel {
 
   Future<CallApiResult> unregisterEventHandler(
       ScopedEvent scopedEvent, String params) async {
+    if (!_initilized) {
+      return CallApiResult(
+          irisReturnCode: kDisposedIrisMethodCallReturnCode,
+          data: kDisposedIrisMethodCallData);
+    }
+
     final DisposableScopedObjects? subScopedObjects =
         scopedEventHandlers.get(scopedEvent.scopedKey);
     final eventKey = _EventHandlerHolderKey(
@@ -565,6 +612,10 @@ class IrisMethodChannel {
   }
 
   Future<void> unregisterEventHandlers(TypedScopedKey scopedKey) async {
+    if (!_initilized) {
+      return;
+    }
+
     final DisposableScopedObjects? subScopedObjects =
         scopedEventHandlers.remove(scopedKey);
     if (subScopedObjects != null) {
@@ -594,6 +645,10 @@ class IrisMethodChannel {
   }
 
   int getNativeHandle() {
+    if (!_initilized) {
+      return 0;
+    }
+
     return _nativeHandle;
   }
 
