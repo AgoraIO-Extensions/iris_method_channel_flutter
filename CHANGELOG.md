@@ -1,5 +1,9 @@
 # Changelog
 
+* Do not throw error when call function after disposed (0fa19c2)
+* feat: implement invokeMethodList (15c6e38)
+* Clean up codes (e4e1176)
+
 ## [1.1.0-rc.3](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.2...1.1.0-rc.3) (2023-02-23)
 
 
