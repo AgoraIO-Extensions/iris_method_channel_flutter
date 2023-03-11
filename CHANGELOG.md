@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0-rc.4](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.3...1.1.0-rc.4) (2023-03-11)
+
+
+### Features
+
+* implement invokeMethodList ([15c6e38](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/15c6e3855c1a3bdfbd51101bcbda5a1b36a2c98b))
+
 ## [1.1.0-rc.3](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.2...1.1.0-rc.3) (2023-02-23)
 
 
