@@ -303,15 +303,15 @@ class IrisMethodChannel {
   IrisMethodChannel();
 
   bool _initilized = false;
-  late final _Messenger messenger;
-  late final StreamSubscription evntSubscription;
+  late _Messenger messenger;
+  late StreamSubscription evntSubscription;
   @visibleForTesting
   final ScopedObjects scopedEventHandlers = ScopedObjects();
-  late final int _nativeHandle;
+  late int _nativeHandle;
 
   @visibleForTesting
-  late final Isolate workerIsolate;
-  late final _HotRestartFinalizer _hotRestartFinalizer;
+  late Isolate workerIsolate;
+  late _HotRestartFinalizer _hotRestartFinalizer;
 
   static Future<void> _execute(_InitilizationArgs args) async {
     SendPort mainApiCallSendPort = args.apiCallPortSendPort;
