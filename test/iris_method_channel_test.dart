@@ -239,6 +239,35 @@ void main() {
         _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
   });
 
+  test(
+      'able to initilize/dispose multiple times for same IrisMethodChannel object',
+      () async {
+    final irisMethodChannel = IrisMethodChannel();
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+    final callApiResult1 = await irisMethodChannel
+        .invokeMethod(const IrisMethodCall('a_func_name', 'params'));
+    expect(callApiResult1.irisReturnCode, 0);
+    expect(callApiResult1.data, {});
+
+    final callRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'a_func_name');
+    expect(callRecord1.length, 1);
+
+    await irisMethodChannel.dispose();
+
+    await irisMethodChannel.initilize(nativeBindingsProvider);
+    final callApiResult2 = await irisMethodChannel
+        .invokeMethod(const IrisMethodCall('a_func_name2', 'params'));
+    expect(callApiResult2.irisReturnCode, 0);
+    expect(callApiResult2.data, {});
+
+    final callRecord2 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'a_func_name2');
+    expect(callRecord2.length, 1);
+
+    await irisMethodChannel.dispose();
+  });
+
   test('invokeMethod', () async {
     final irisMethodChannel = IrisMethodChannel();
     await irisMethodChannel.initilize(nativeBindingsProvider);
