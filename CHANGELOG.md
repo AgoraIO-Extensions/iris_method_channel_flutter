@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0-rc.5](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.4...1.1.0-rc.5) (2023-03-16)
+
+
+### Features
+
+* allow initilize/dispose multiple times for same IrisMethodChannel object ([00d1388](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/00d13889fa39383af86703be1011579dfcc97486))
+
+
+### Bug Fixes
+
+* fix memeory leak if Dart_PostCObject_DL failed to send the message ([55f322f](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/55f322fd202c361b4cc78c1fb060109518e918aa))
+
 ## [1.1.0-rc.4](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.3...1.1.0-rc.4) (2023-03-11)
 
 
