@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <map>
+#include <vector>
 
 #include "iris_life_cycle_observer.h"
 
@@ -79,13 +80,13 @@ public:
             Dart_CObject dbuffer;
             dbuffer.type = Dart_CObject_kArray;
             dbuffer.value.as_array.length = param->buffer_count;
-            Dart_CObject **type_data_array =
-                new Dart_CObject *[param->buffer_count];
+
+            std::vector<Dart_CObject *> external_objs;
             for (unsigned int i = 0; i < param->buffer_count; i++)
             {
                 const void *obuffer = param->buffer[i];
                 unsigned int abufferLength = param->length[i];
-                uint8_t *abuffer = reinterpret_cast<uint8_t *>(malloc(abufferLength));
+                uint8_t *abuffer = static_cast<uint8_t *>(malloc(abufferLength));
                 memcpy(abuffer, obuffer, abufferLength);
 
                 Dart_CObject *cbuffer = new Dart_CObject;
@@ -96,9 +97,9 @@ public:
                 cbuffer->value.as_external_typed_data.peer = abuffer;
                 cbuffer->value.as_external_typed_data.callback = Finalizer;
 
-                type_data_array[i] = cbuffer;
+                external_objs.push_back(cbuffer);
             }
-            dbuffer.value.as_array.values = type_data_array;
+            dbuffer.value.as_array.values = external_objs.data();
             Dart_CObject *c_event_data_arr[] = {&c_event, &c_data, &dbuffer};
 
             Dart_CObject c_on_event_data;
@@ -108,15 +109,25 @@ public:
                 sizeof(c_event_data_arr) / sizeof(c_event_data_arr[0]);
 
             if (exit_flag_ == 0)
-                Dart_PostCObject_DL(dart_send_port_, &c_on_event_data);
+            {
+                bool result = Dart_PostCObject_DL(dart_send_port_, &c_on_event_data);
+                // Need free the external typed data if failed to send,
+                // see https://github.com/dart-lang/sdk/issues/47270
+                if (!result)
+                {
+                    for (auto *it : external_objs)
+                    {
+                        Finalizer(nullptr, it->value.as_external_typed_data.peer);
+                    }
+                }
+            }
 
             if (param->buffer_count != 0)
             {
-                for (intptr_t i = 0; i < param->buffer_count; ++i)
+                for (auto *it : external_objs)
                 {
-                    delete type_data_array[i];
+                    delete it;
                 }
-                delete[] type_data_array;
             }
         }
         else
@@ -182,7 +193,6 @@ private:
     std::map<Dart_Port, std::unique_ptr<DartMessageHandler>> dartMessageHandlerMap_;
 };
 
-// DartMessageHandler *dartMessageHandler_ = nullptr;
 DartMessageHandlerManager *dartMessageHandlerManager_ = nullptr;
 
 // Initialize `dart_api_dl.h`
@@ -193,7 +203,6 @@ EXPORT intptr_t InitDartApiDL(void *data)
         dartMessageHandlerManager_ = new DartMessageHandlerManager();
     }
 
-    // dartMessageHandler_ = new DartMessageHandler();
     return dartMessageHandlerManager_->InitDartApiDL(data);
 }
 
