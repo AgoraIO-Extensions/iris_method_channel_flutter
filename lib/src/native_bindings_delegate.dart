@@ -22,7 +22,8 @@ class CreateNativeApiEngineResult {
 abstract class NativeBindingDelegate {
   void initialize();
 
-  CreateNativeApiEngineResult createNativeApiEngine(List<ffi.Pointer<ffi.Void>> args);
+  CreateNativeApiEngineResult createNativeApiEngine(
+      List<ffi.Pointer<ffi.Void>> args);
 
   CallApiResult invokeMethod(
     ffi.Pointer<ffi.Void> irisApiEnginePtr,

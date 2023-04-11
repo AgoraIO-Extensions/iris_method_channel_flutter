@@ -14,15 +14,6 @@ import 'bindings/native_iris_api_common_bindings.dart' as iris;
 
 // ignore_for_file: public_member_api_docs
 
-int? _mockIrisMethodChannelNativeHandle;
-void setMockIrisMethodChannelNativeHandle(
-    int? mockIrisMethodChannelNativeHandle) {
-  assert(() {
-    _mockIrisMethodChannelNativeHandle = mockIrisMethodChannelNativeHandle;
-    return true;
-  }());
-}
-
 class IrisMethodCall {
   const IrisMethodCall(this.funcName, this.params,
       {this.buffers, this.rawBufferParams});
@@ -325,23 +316,10 @@ class IrisMethodChannel {
     SendPort? onExitSendPort = args.onExitSendPort;
     NativeBindingsProvider provider = args.provider;
 
-    // ffi.Pointer<ffi.Void>? irisApiEnginePtr;
     List<ffi.Pointer<ffi.Void>> argsInner = args.argNativeHandles
         .map<ffi.Pointer<ffi.Void>>((e) => ffi.Pointer.fromAddress(e))
         .toList();
-    // We only aim to pass the irisApiEngine to the executor in the integration test (debug mode)
-    // assert(() {
-    //   final intptr = args.mockIrisMethodChannelNativeHandle;
-    //   if (intptr != null) {
-    //     irisApiEnginePtr = ffi.Pointer.fromAddress(intptr);
-    //     argsInner = [irisApiEnginePtr!];
-    //   }
 
-    //   return true;
-    // }());
-
-    // Send a SendPort to the main isolate so that it can send JSON strings to
-    // this isolate.
     final apiCallPort = ReceivePort();
 
     final nativeBindingDelegate = provider.provideNativeBindingDelegate();
@@ -745,13 +723,6 @@ class _IrisMethodChannelNative {
       SendPort sendPort, List<ffi.Pointer<ffi.Void>> args) {
     _irisEvent.initialize();
     _nativeIrisApiEngineBinding.initialize();
-
-    // if (args.isNotEmpty) {
-    //   _irisApiEnginePtr = args[0];
-    // } else {
-    //   _irisApiEnginePtr =
-    //       _nativeIrisApiEngineBinding.createNativeApiEngine(args);
-    // }
 
     final createResult =
         _nativeIrisApiEngineBinding.createNativeApiEngine(args);
