@@ -41,7 +41,7 @@ class _FakeNativeBindingDelegateMessenger {
   }
 }
 
-class _FakeNativeBindingDelegate implements NativeBindingDelegate {
+class _FakeNativeBindingDelegate extends NativeBindingDelegate {
   _FakeNativeBindingDelegate(this.apiCallPortSendPort);
 
   final SendPort apiCallPortSendPort;
@@ -95,9 +95,12 @@ class _FakeNativeBindingDelegate implements NativeBindingDelegate {
   }
 
   @override
-  ffi.Pointer<ffi.Void> createNativeApiEngine(
+  CreateNativeApiEngineResult createNativeApiEngine(
       List<ffi.Pointer<ffi.Void>> args) {
-    return ffi.Pointer<ffi.Void>.fromAddress(0);
+    return CreateNativeApiEngineResult(
+      ffi.Pointer<ffi.Void>.fromAddress(100),
+      extraData: <String, Object>{'extra_handle': 1000},
+    );
   }
 
   @override
@@ -229,6 +232,7 @@ class _TestEventLoopEventHandler extends EventLoopEventHandler {
 void main() {
   late _FakeNativeBindingDelegateMessenger messenger;
   late NativeBindingsProvider nativeBindingsProvider;
+  late IrisMethodChannel irisMethodChannel;
 
   setUp(() {
     messenger = _FakeNativeBindingDelegateMessenger();
@@ -237,13 +241,34 @@ void main() {
     final _FakeIrisEvent irisEvent = _FakeIrisEvent(messenger.getSendPort());
     nativeBindingsProvider =
         _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
+    irisMethodChannel = IrisMethodChannel(nativeBindingsProvider);
+  });
+
+  group('Get InitilizationResult', () {
+    test('able to get InitilizationResult from initilize', () async {
+      InitilizationResult? result = await irisMethodChannel.initilize([]);
+      expect(result, isNotNull);
+
+      expect(result!.irisApiEngineNativeHandle, 100);
+      expect(result.extraData, {'extra_handle': 1000});
+
+      await irisMethodChannel.dispose();
+    });
+
+    test('get null InitilizationResult if initilize multiple times', () async {
+      await irisMethodChannel.initilize([]);
+
+      InitilizationResult? result = await irisMethodChannel.initilize([]);
+      expect(result, isNull);
+
+      await irisMethodChannel.dispose();
+    });
   });
 
   test(
       'able to initilize/dispose multiple times for same IrisMethodChannel object',
       () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
     final callApiResult1 = await irisMethodChannel
         .invokeMethod(const IrisMethodCall('a_func_name', 'params'));
     expect(callApiResult1.irisReturnCode, 0);
@@ -255,7 +280,7 @@ void main() {
 
     await irisMethodChannel.dispose();
 
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
     final callApiResult2 = await irisMethodChannel
         .invokeMethod(const IrisMethodCall('a_func_name2', 'params'));
     expect(callApiResult2.irisReturnCode, 0);
@@ -269,8 +294,7 @@ void main() {
   });
 
   test('invokeMethod', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
     final callApiResult = await irisMethodChannel
         .invokeMethod(const IrisMethodCall('a_func_name', 'params'));
     expect(callApiResult.irisReturnCode, 0);
@@ -280,8 +304,7 @@ void main() {
   });
 
   test('invokeMethodList', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
     const methodCalls = [
       IrisMethodCall('a_func_name', 'params'),
       IrisMethodCall('a_func_name2', 'params')
@@ -306,8 +329,7 @@ void main() {
   });
 
   test('registerEventHandler', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler = _TestEventLoopEventHandler();
@@ -338,18 +360,7 @@ void main() {
   });
 
   test('unregisterEventHandler', () async {
-    final _FakeNativeBindingDelegateMessenger messenger =
-        _FakeNativeBindingDelegateMessenger();
-    final _FakeNativeBindingDelegate nativeBindingDelegate =
-        _FakeNativeBindingDelegate(
-      messenger.getSendPort(),
-    );
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent(messenger.getSendPort());
-    final NativeBindingsProvider nativeBindingsProvider =
-        _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
-
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler = _TestEventLoopEventHandler();
@@ -384,18 +395,7 @@ void main() {
   });
 
   test('unregisterEventHandlers', () async {
-    final _FakeNativeBindingDelegateMessenger messenger =
-        _FakeNativeBindingDelegateMessenger();
-    final _FakeNativeBindingDelegate nativeBindingDelegate =
-        _FakeNativeBindingDelegate(
-      messenger.getSendPort(),
-    );
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent(messenger.getSendPort());
-    final NativeBindingsProvider nativeBindingsProvider =
-        _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
-
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler = _TestEventLoopEventHandler();
@@ -420,8 +420,7 @@ void main() {
   });
 
   test('invokeMethod after disposed', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
     await irisMethodChannel.dispose();
     final callApiResult = await irisMethodChannel
         .invokeMethod(const IrisMethodCall('a_func_name', 'params'));
@@ -434,8 +433,7 @@ void main() {
   });
 
   test('invokeMethodList after disposed', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
     await irisMethodChannel.dispose();
     const methodCalls = [
       IrisMethodCall('a_func_name', 'params'),
@@ -460,8 +458,7 @@ void main() {
   });
 
   test('registerEventHandler after disposed', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
     await irisMethodChannel.dispose();
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
@@ -484,18 +481,7 @@ void main() {
   });
 
   test('unregisterEventHandler after disposed', () async {
-    final _FakeNativeBindingDelegateMessenger messenger =
-        _FakeNativeBindingDelegateMessenger();
-    final _FakeNativeBindingDelegate nativeBindingDelegate =
-        _FakeNativeBindingDelegate(
-      messenger.getSendPort(),
-    );
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent(messenger.getSendPort());
-    final NativeBindingsProvider nativeBindingsProvider =
-        _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
-
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
     await irisMethodChannel.dispose();
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
@@ -525,18 +511,7 @@ void main() {
   });
 
   test('unregisterEventHandlers after disposed', () async {
-    final _FakeNativeBindingDelegateMessenger messenger =
-        _FakeNativeBindingDelegateMessenger();
-    final _FakeNativeBindingDelegate nativeBindingDelegate =
-        _FakeNativeBindingDelegate(
-      messenger.getSendPort(),
-    );
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent(messenger.getSendPort());
-    final NativeBindingsProvider nativeBindingsProvider =
-        _FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
-
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
     await irisMethodChannel.dispose();
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
@@ -560,8 +535,7 @@ void main() {
   });
 
   test('registerEventHandler 2 times', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler1 = _TestEventLoopEventHandler();
@@ -601,8 +575,7 @@ void main() {
   });
 
   test('registerEventHandler 2 times with different registerName', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler1 = _TestEventLoopEventHandler();
@@ -650,8 +623,7 @@ void main() {
   });
 
   test('registerEventHandler 2 times, then unregisterEventHandler', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler1 = _TestEventLoopEventHandler();
@@ -700,8 +672,7 @@ void main() {
   test(
       'registerEventHandler 2 times with different registerName, then unregisterEventHandler',
       () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler1 = _TestEventLoopEventHandler();
@@ -754,8 +725,7 @@ void main() {
   test(
       'registerEventHandler 2 times with different registerName, then unregisterEventHandler, then unregisterEventHandlers',
       () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler1 = _TestEventLoopEventHandler();
@@ -803,8 +773,7 @@ void main() {
   test(
       'registerEventHandler 2 times with different registerName, then unregisterEventHandler without await, then unregisterEventHandlers',
       () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler1 = _TestEventLoopEventHandler();
@@ -852,8 +821,7 @@ void main() {
   test(
       'registerEventHandler 2 times with different registerName, then unregisterEventHandler without await, then unregisterEventHandlers without await',
       () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler1 = _TestEventLoopEventHandler();
@@ -898,8 +866,7 @@ void main() {
   });
 
   test('registerEventHandler 2 times, then unregisterEventHandlers', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler1 = _TestEventLoopEventHandler();
@@ -935,8 +902,7 @@ void main() {
   test(
       'registerEventHandler 2 times with different registerName, then unregisterEventHandlers',
       () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     const key = TypedScopedKey(_TestEventLoopEventHandler);
     final eventHandler1 = _TestEventLoopEventHandler();
@@ -974,8 +940,7 @@ void main() {
   });
 
   test('Should clean native resources when hot restart happen', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     irisMethodChannel.workerIsolate.kill(priority: Isolate.immediate);
     // Delayed 1 second to ensure `irisMethodChannel.workerIsolate.kill` done
@@ -995,8 +960,7 @@ void main() {
   });
 
   test('addHotRestartListener', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     bool hotRestartListenerCalled = false;
     irisMethodChannel.addHotRestartListener((message) {
@@ -1011,8 +975,7 @@ void main() {
   });
 
   test('removeHotRestartListener', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     bool hotRestartListenerCalled = false;
     // ignore: prefer_function_declarations_over_variables
@@ -1030,8 +993,7 @@ void main() {
   });
 
   test('removeHotRestartListener through returned VoidCallback', () async {
-    final irisMethodChannel = IrisMethodChannel();
-    await irisMethodChannel.initilize(nativeBindingsProvider);
+    await irisMethodChannel.initilize([]);
 
     bool hotRestartListenerCalled = false;
     // ignore: prefer_function_declarations_over_variables
