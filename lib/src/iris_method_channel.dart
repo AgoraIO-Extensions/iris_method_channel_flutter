@@ -722,13 +722,12 @@ class _IrisMethodChannelNative {
   CreateNativeApiEngineResult initilize(
       SendPort sendPort, List<ffi.Pointer<ffi.Void>> args) {
     _irisEvent.initialize();
-    _nativeIrisApiEngineBinding.initialize();
+    _irisEvent.registerEventHandler(sendPort);
 
+    _nativeIrisApiEngineBinding.initialize();
     final createResult =
         _nativeIrisApiEngineBinding.createNativeApiEngine(args);
     _irisApiEnginePtr = createResult.apiEnginePtr;
-
-    _irisEvent.registerEventHandler(sendPort);
 
     _irisCEventHandler = calloc<iris.IrisCEventHandler>()
       ..ref.OnEvent = _irisEvent.onEventPtr.cast();
