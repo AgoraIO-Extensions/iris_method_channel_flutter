@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.5...1.1.0) (2023-05-16)
+
+
+### Features
+
+* add InitilizationResult return type for IrisMethodChannel.initilize ([#45](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/45)) ([ed46461](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/ed464616bdf65ccbb9fae1548968a8091200c71b))
+
 ## [1.1.0-rc.5](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.4...1.1.0-rc.5) (2023-03-16)
 
 
