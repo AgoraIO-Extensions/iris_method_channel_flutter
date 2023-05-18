@@ -14,9 +14,9 @@ android_build_task:
   <<: *default_macos_container
 
   matrix:
-    - name: FLUTTER_VERSION 3.7.0
+    - name: FLUTTER_VERSION 3.10.0
       env:
-        FLUTTER_VERSION: 3.7.0
+        FLUTTER_VERSION: 3.10.0
   switch_flutter_version_script:
     - cd ${MACOS_HOST_FLUTTER_SDK_DIR}
     - git fetch

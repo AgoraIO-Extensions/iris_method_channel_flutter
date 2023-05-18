@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.7.0'
+          flutter-version: '3.10.0'
           cache: true
           cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:' # optional, change this to force refresh cache
           cache-path: '${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:' # optional, change this to specify the cache path
@@ -47,7 +47,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3', '3.10.0']
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v1
@@ -57,6 +57,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ matrix.version }}
+          cache: true
       - run: flutter pub get
       - name: Build windows
         run: flutter build windows
@@ -67,7 +68,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3', '3.10.0']
     runs-on: macos-11
     timeout-minutes: 60
     steps:
@@ -75,6 +76,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ matrix.version }}
+          cache: true
       - run: flutter pub get
       - name: Run flutter build ios --no-codesign
         run: flutter build ios --no-codesign
@@ -85,7 +87,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3', '3.10.0']
     runs-on: macos-11
     timeout-minutes: 60
     steps:
@@ -93,6 +95,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ matrix.version }}
+          cache: true
       - run: flutter pub get
       - run: flutter config --enable-macos-desktop
       - name: Run flutter build macos
@@ -104,7 +107,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3', '3.10.0']
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v1
@@ -114,6 +117,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ matrix.version }}
+          cache: true
       - run: flutter pub get
       - name: Run flutter build apk
         run: flutter build apk
@@ -124,7 +128,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3', '3.10.0']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -134,6 +138,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ matrix.version }}
+          cache: true
       - run: flutter pub get
       - name: Run flutter build apk
         run: flutter build apk
@@ -144,7 +149,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3']
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3', '3.10.0']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -154,5 +159,6 @@ jobs:
       - uses: subosito/flutter-action@v1
         with:
           flutter-version: ${{ matrix.version }}
+          cache: true
       - run: flutter packages get
       - run: flutter test
