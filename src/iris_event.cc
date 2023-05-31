@@ -3,6 +3,9 @@
 
 #include "iris_event.h"
 
+#include <cstring>
+#include <cstdint>
+
 #include <memory>
 #include <map>
 #include <vector>
@@ -87,7 +90,7 @@ public:
                 const void *obuffer = param->buffer[i];
                 unsigned int abufferLength = param->length[i];
                 uint8_t *abuffer = static_cast<uint8_t *>(malloc(abufferLength));
-                memcpy(abuffer, obuffer, abufferLength);
+                std::memcpy(abuffer, obuffer, abufferLength);
 
                 Dart_CObject *cbuffer = new Dart_CObject;
                 cbuffer->type = Dart_CObject_kExternalTypedData;
