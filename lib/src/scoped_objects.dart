@@ -13,7 +13,12 @@ class DisposableScopedObjects extends ScopedObjects
 
 /// Interface to indicate the object is disposable.
 abstract class DisposableObject {
-  /// Dispose the object.
+  /// Callback when the object is being disposed. DO NOT call this function directly.
+  /// If you want to mark the object as disposed, use the [ScopedDisposableObjectMixin.markDisposed]
+  /// instead.
+  ///
+  /// See also:
+  /// * [ScopedDisposableObjectMixin], mixin for [DisposableObject]
   Future<void> dispose();
 }
 
@@ -32,7 +37,7 @@ mixin ScopedDisposableObjectMixin implements DisposableObject {
     _scopedObjects = scopedObjects;
   }
 
-  /// Explicitly mark the object to disposed, which will remove the object from
+  /// Explicitly mark the object as disposed, which will remove the object from
   /// the [ScopedObjects].
   ///
   /// NOTE that this function will not trigger the [DisposableObject.dispose].
@@ -45,7 +50,7 @@ mixin ScopedDisposableObjectMixin implements DisposableObject {
     _isDisposed = true;
   }
 
-  Future<void> _disposeInternal() async {
+  Future<void> _disposeOnParentClear() async {
     if (_isDisposed) return SynchronousFuture(null);
 
     await dispose();
@@ -85,44 +90,84 @@ class TypedScopedKey implements ScopedKey {
 class ScopedObjects {
   @visibleForTesting
   // ignore: public_member_api_docs
-  final Map<ScopedKey, ScopedDisposableObjectMixin> pool = {};
-  final Set<ScopedKey> _disposedKeys = {};
+  final Map<ScopedKey, ScopedDisposableObjectMixin?> pool = {};
+  // final Set<ScopedKey> _disposedKeys = {};
   bool _isClearing = false;
 
   void _markDisposed(ScopedKey scopedKey) {
-    if (_isClearing) {
-      _disposedKeys.add(scopedKey);
-    } else {
-      pool.remove(scopedKey);
-    }
+    remove(scopedKey);
   }
 
   /// Put an [ScopedDisposableObjectMixin] object if absent
   T putIfAbsent<T extends ScopedDisposableObjectMixin>(
       ScopedKey key, DisposableObjectProvider provider) {
-    return pool.putIfAbsent(key, () {
+    T? v = pool.putIfAbsent(key, () {
       final o = provider();
       o._setOwner(this);
       o._setScopedKey(key);
       return o;
-    }) as T;
+    }) as T?;
+
+    if (v == null) {
+      final o = provider();
+      o._setOwner(this);
+      o._setScopedKey(key);
+
+      pool[key] = o;
+    }
+
+    return v!;
   }
 
   /// Remove the [ScopedDisposableObjectMixin] object by key
   T? remove<T extends ScopedDisposableObjectMixin>(ScopedKey key) {
-    return pool.remove(key) as T?;
+    T? returnValue;
+    final thePool = pool;
+    if (_isClearing) {
+      for (final k in thePool.keys) {
+        if (k == key) {
+          thePool[key] = null;
+          returnValue = null;
+        }
+      }
+    } else {
+      returnValue = thePool.remove(key) as T?;
+    }
+
+    return returnValue;
   }
 
   /// Get the [ScopedDisposableObjectMixin] object by key
   T? get<T extends ScopedDisposableObjectMixin>(ScopedKey key) {
-    return pool[key] as T?;
+    final v = pool[key] as T?;
+    _tryDefragmentPool();
+    return v;
   }
 
   /// Get all the [ScopedKey]s
-  Iterable<ScopedKey> get keys => pool.keys;
+  Iterable<ScopedKey> get keys {
+    List<ScopedKey> nonNullKeys = [];
+    final thePool = pool;
+    thePool.forEach((key, value) {
+      if (value != null) {
+        nonNullKeys.add(key);
+      }
+    });
+
+    return nonNullKeys;
+  }
 
   /// Get all the [ScopedDisposableObjectMixin] objects
-  Iterable<ScopedDisposableObjectMixin> get values => pool.values;
+  Iterable<ScopedDisposableObjectMixin> get values {
+    List<ScopedDisposableObjectMixin> nonNullValues = [];
+    final thePool = pool;
+    for (final v in thePool.values) {
+      if (v != null) {
+        nonNullValues.add(v);
+      }
+    }
+    return nonNullValues;
+  }
 
   /// Clear all the [ScopedDisposableObjectMixin] objects, which will trigger the
   /// [DisposableObject.dispose]
@@ -130,10 +175,19 @@ class ScopedObjects {
     _isClearing = true;
     final values = pool.values;
     for (final v in values) {
-      await v._disposeInternal();
+      await v?._disposeOnParentClear();
     }
 
     pool.clear();
     _isClearing = false;
+  }
+
+  void _tryDefragmentPool() {
+    if (_isClearing) {
+      return;
+    }
+
+    final thePool = pool;
+    thePool.removeWhere((key, value) => value == null);
   }
 }
