@@ -82,6 +82,30 @@ void main() {
       expect(getValue, isNull);
     });
 
+    test(
+        'remove when clearing, and then putIfAbsent, should override the value of key',
+        () async {
+      ScopedObjects scopedObjects = ScopedObjects();
+      const key = TypedScopedKey(TestDisposableObject);
+      final obj = TestLongTimeDisposableObject();
+      scopedObjects.putIfAbsent(key, () => obj);
+
+      // Do not add `await` here to simulate the simultaneously calls of `clear` and `remove`
+      scopedObjects.clear();
+
+      scopedObjects.remove(key);
+
+      // Wait 1000ms to ensure the `scopedObjects.clear()` is completed.
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      final obj2 = TestLongTimeDisposableObject();
+      final putValue = scopedObjects.putIfAbsent(key, () => obj2);
+
+      final thePool = scopedObjects.pool;
+      expect(thePool.length, 1);
+      expect(putValue == obj2, isTrue);
+    });
+
     test('get', () {
       ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
