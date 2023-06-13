@@ -91,7 +91,6 @@ class ScopedObjects {
   @visibleForTesting
   // ignore: public_member_api_docs
   final Map<ScopedKey, ScopedDisposableObjectMixin?> pool = {};
-  // final Set<ScopedKey> _disposedKeys = {};
   bool _isClearing = false;
 
   void _markDisposed(ScopedKey scopedKey) {
