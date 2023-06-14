@@ -6,6 +6,13 @@ class TestDisposableObject with ScopedDisposableObjectMixin {
   Future<void> dispose() async {}
 }
 
+class TestLongTimeDisposableObject with ScopedDisposableObjectMixin {
+  @override
+  Future<void> dispose() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+}
+
 class MarkDisposeOnDisposeDisposableObject with ScopedDisposableObjectMixin {
   @override
   Future<void> dispose() async {
@@ -35,6 +42,70 @@ void main() {
       expect(scopedObjects.pool.isEmpty, isTrue);
     });
 
+    test('remove when clearing, should set the value of key to null', () {
+      ScopedObjects scopedObjects = ScopedObjects();
+      const key = TypedScopedKey(TestDisposableObject);
+      final obj = TestLongTimeDisposableObject();
+      scopedObjects.putIfAbsent(key, () => obj);
+
+      // Do not add `await` here to simulate the simultaneously calls of `clear` and `remove`
+      scopedObjects.clear();
+
+      scopedObjects.remove(key);
+
+      final thePool = scopedObjects.pool;
+      // Call remove only set the value of key to null
+      expect(thePool.length, 1);
+      expect(thePool[key], isNull);
+    });
+
+    test('remove when clearing, and then get, should clear the value of key',
+        () async {
+      ScopedObjects scopedObjects = ScopedObjects();
+      const key = TypedScopedKey(TestDisposableObject);
+      final obj = TestLongTimeDisposableObject();
+      scopedObjects.putIfAbsent(key, () => obj);
+
+      // Do not add `await` here to simulate the simultaneously calls of `clear` and `remove`
+      scopedObjects.clear();
+
+      scopedObjects.remove(key);
+
+      // Wait 1000ms to ensure the `scopedObjects.clear()` is completed.
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      final getValue = scopedObjects.get(key);
+
+      final thePool = scopedObjects.pool;
+      // Call remove only set the value of key to null
+      expect(thePool.length, 0);
+      expect(getValue, isNull);
+    });
+
+    test(
+        'remove when clearing, and then putIfAbsent, should override the value of key',
+        () async {
+      ScopedObjects scopedObjects = ScopedObjects();
+      const key = TypedScopedKey(TestDisposableObject);
+      final obj = TestLongTimeDisposableObject();
+      scopedObjects.putIfAbsent(key, () => obj);
+
+      // Do not add `await` here to simulate the simultaneously calls of `clear` and `remove`
+      scopedObjects.clear();
+
+      scopedObjects.remove(key);
+
+      // Wait 1000ms to ensure the `scopedObjects.clear()` is completed.
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      final obj2 = TestLongTimeDisposableObject();
+      final putValue = scopedObjects.putIfAbsent(key, () => obj2);
+
+      final thePool = scopedObjects.pool;
+      expect(thePool.length, 1);
+      expect(putValue == obj2, isTrue);
+    });
+
     test('get', () {
       ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
@@ -62,7 +133,7 @@ void main() {
     test('markDisposed', () async {
       ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
-      final obj = MarkDisposeOnDisposeDisposableObject();
+      final obj = TestDisposableObject();
       scopedObjects.putIfAbsent(key, () => obj);
 
       obj.markDisposed();
@@ -73,7 +144,7 @@ void main() {
     test('markDisposed inside dispose', () async {
       ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
-      final obj = TestDisposableObject();
+      final obj = MarkDisposeOnDisposeDisposableObject();
       scopedObjects.putIfAbsent(key, () => obj);
 
       await scopedObjects.clear();
