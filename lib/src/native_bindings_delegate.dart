@@ -118,7 +118,7 @@ abstract class NativeBindingDelegate {
         );
       } catch (e) {
         debugPrint(
-            '[_ApiCallExecutor] $funcName, params: $params\nerror: ${e.toString()}');
+            '[_ApiCallExecutor] $funcName, params: $params\nerror: $e');
         return CallApiResult(irisReturnCode: -1, data: const {});
       }
     });
