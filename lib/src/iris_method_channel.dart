@@ -2,15 +2,16 @@ import 'dart:async';
 import 'dart:ffi' as ffi;
 import 'dart:isolate';
 import 'dart:typed_data';
-import 'package:async/async.dart';
 
+import 'package:async/async.dart';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart'
     show SynchronousFuture, VoidCallback, visibleForTesting;
+import 'package:iris_method_channel/src/bindings/native_iris_api_common_bindings.dart'
+    as iris;
 import 'package:iris_method_channel/src/iris_event.dart';
 import 'package:iris_method_channel/src/native_bindings_delegate.dart';
 import 'package:iris_method_channel/src/scoped_objects.dart';
-import 'bindings/native_iris_api_common_bindings.dart' as iris;
 
 // ignore_for_file: public_member_api_docs
 
@@ -95,16 +96,13 @@ Uint8List uint8ListFromPtr(int intPtr, int length) {
 }
 
 ffi.Pointer<ffi.Void> uint8ListToPtr(Uint8List buffer) {
-  ffi.Pointer<ffi.Void> bufferPointer;
-
   final ffi.Pointer<ffi.Uint8> bufferData =
       calloc.allocate<ffi.Uint8>(buffer.length);
 
   final pointerList = bufferData.asTypedList(buffer.length);
   pointerList.setAll(0, buffer);
 
-  bufferPointer = bufferData.cast<ffi.Void>();
-  return bufferPointer;
+  return bufferData.cast<ffi.Void>();
 }
 
 void freePointer(ffi.Pointer<ffi.Void> ptr) {
@@ -141,7 +139,9 @@ class _Messenger implements DisposableObject {
 
   @override
   Future<void> dispose() async {
-    if (!_isDisposed) return;
+    if (!_isDisposed) {
+      return;
+    }
     _isDisposed = true;
     requestPort.send(null);
     await responseQueue.cancel();
@@ -198,9 +198,7 @@ class _HotRestartFinalizer {
   _HotRestartFinalizer(this.provider) {
     assert(() {
       _onExitPort = ReceivePort();
-      _onExitSubscription = _onExitPort?.listen((message) {
-        _finalize(message);
-      });
+      _onExitSubscription = _onExitPort?.listen(_finalize);
 
       return true;
     }());
@@ -232,6 +230,7 @@ class _HotRestartFinalizer {
     _debugIrisEventHandlerNativeHandle = value;
   }
 
+  // ignore: avoid_annotating_with_dynamic
   void _finalize(dynamic msg) {
     if (_isFinalize) {
       return;
@@ -311,12 +310,12 @@ class IrisMethodChannel {
   late _HotRestartFinalizer _hotRestartFinalizer;
 
   static Future<void> _execute(_InitilizationArgs args) async {
-    SendPort mainApiCallSendPort = args.apiCallPortSendPort;
-    SendPort mainEventSendPort = args.eventPortSendPort;
-    SendPort? onExitSendPort = args.onExitSendPort;
-    NativeBindingsProvider provider = args.provider;
+    final SendPort mainApiCallSendPort = args.apiCallPortSendPort;
+    final SendPort mainEventSendPort = args.eventPortSendPort;
+    final SendPort? onExitSendPort = args.onExitSendPort;
+    final NativeBindingsProvider provider = args.provider;
 
-    List<ffi.Pointer<ffi.Void>> argsInner = args.argNativeHandles
+    final List<ffi.Pointer<ffi.Void>> argsInner = args.argNativeHandles
         .map<ffi.Pointer<ffi.Void>>((e) => ffi.Pointer.fromAddress(e))
         .toList();
 
@@ -325,9 +324,9 @@ class IrisMethodChannel {
     final nativeBindingDelegate = provider.provideNativeBindingDelegate();
     final irisEvent = provider.provideIrisEvent();
 
-    _IrisMethodChannelNative executor =
+    final _IrisMethodChannelNative executor =
         _IrisMethodChannelNative(nativeBindingDelegate, irisEvent);
-    CreateNativeApiEngineResult executorInitilizationResult =
+    final CreateNativeApiEngineResult executorInitilizationResult =
         executor.initilize(mainEventSendPort, argsInner);
 
     int? debugIrisCEventHandlerNativeHandle;
@@ -403,7 +402,9 @@ class IrisMethodChannel {
   }
 
   Future<InitilizationResult?> initilize(List<int> args) async {
-    if (_initilized) return null;
+    if (_initilized) {
+      return null;
+    }
 
     final apiCallPort = ReceivePort();
     final eventPort = ReceivePort();
@@ -518,7 +519,9 @@ class IrisMethodChannel {
   }
 
   Future<void> dispose() async {
-    if (!_initilized) return;
+    if (!_initilized) {
+      return;
+    }
     _initilized = false;
     _hotRestartFinalizer.dispose();
     await scopedEventHandlers.clear();
@@ -555,7 +558,7 @@ class IrisMethodChannel {
       result = await messenger.send(_CreateNativeEventHandlerRequest(
           IrisMethodCall(eventKey.registerName, params)));
 
-      final nativeEventHandlerIntPtr = result.data['observerIntPtr']!;
+      final nativeEventHandlerIntPtr = result.data['observerIntPtr'];
       holder.nativeEventHandlerIntPtr = nativeEventHandlerIntPtr;
     } else {
       result = CallApiResult(irisReturnCode: 0, data: {'result': 0});
@@ -581,24 +584,20 @@ class IrisMethodChannel {
       unregisterName: scopedEvent.unregisterName,
     );
     final EventHandlerHolder? holder = subScopedObjects?.get(eventKey);
-    late CallApiResult result;
     if (holder != null) {
       holder.removeEventHandler(scopedEvent.handler);
       if (holder.getEventHandlers().isEmpty) {
-        result = await messenger.send(_DestroyNativeEventHandlerRequest(
+        return messenger.send(_DestroyNativeEventHandlerRequest(
           IrisMethodCall(
             scopedEvent.unregisterName,
             params,
             rawBufferParams: [BufferParam(holder.nativeEventHandlerIntPtr, 1)],
           ),
         ));
-
-        return result;
       }
     }
 
-    result = CallApiResult(irisReturnCode: 0, data: {'result': 0});
-    return result;
+    return CallApiResult(irisReturnCode: 0, data: {'result': 0});
   }
 
   Future<void> unregisterEventHandlers(TypedScopedKey scopedKey) async {

@@ -51,7 +51,9 @@ mixin ScopedDisposableObjectMixin implements DisposableObject {
   }
 
   Future<void> _disposeOnParentClear() async {
-    if (_isDisposed) return SynchronousFuture(null);
+    if (_isDisposed) {
+      return SynchronousFuture(null);
+    }
 
     await dispose();
 
@@ -111,6 +113,7 @@ class ScopedObjects {
       final o = provider();
       o._setOwner(this);
       o._setScopedKey(key);
+      v = o as T?;
 
       pool[key] = o;
     }
@@ -145,7 +148,7 @@ class ScopedObjects {
 
   /// Get all the [ScopedKey]s
   Iterable<ScopedKey> get keys {
-    List<ScopedKey> nonNullKeys = [];
+    final List<ScopedKey> nonNullKeys = [];
     final thePool = pool;
     thePool.forEach((key, value) {
       if (value != null) {
@@ -158,7 +161,7 @@ class ScopedObjects {
 
   /// Get all the [ScopedDisposableObjectMixin] objects
   Iterable<ScopedDisposableObjectMixin> get values {
-    List<ScopedDisposableObjectMixin> nonNullValues = [];
+    final List<ScopedDisposableObjectMixin> nonNullValues = [];
     final thePool = pool;
     for (final v in thePool.values) {
       if (v != null) {

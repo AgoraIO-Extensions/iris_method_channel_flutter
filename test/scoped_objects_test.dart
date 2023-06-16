@@ -23,7 +23,7 @@ class MarkDisposeOnDisposeDisposableObject with ScopedDisposableObjectMixin {
 void main() {
   group('ScopedObjects ', () {
     test('putIfAbsent', () {
-      ScopedObjects scopedObjects = ScopedObjects();
+      final ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
       final obj = TestDisposableObject();
       scopedObjects.putIfAbsent(key, () => obj);
@@ -32,7 +32,7 @@ void main() {
     });
 
     test('remove', () {
-      ScopedObjects scopedObjects = ScopedObjects();
+      final ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
       final obj = TestDisposableObject();
       scopedObjects.putIfAbsent(key, () => obj);
@@ -43,7 +43,7 @@ void main() {
     });
 
     test('remove when clearing, should set the value of key to null', () {
-      ScopedObjects scopedObjects = ScopedObjects();
+      final ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
       final obj = TestLongTimeDisposableObject();
       scopedObjects.putIfAbsent(key, () => obj);
@@ -61,7 +61,7 @@ void main() {
 
     test('remove when clearing, and then get, should clear the value of key',
         () async {
-      ScopedObjects scopedObjects = ScopedObjects();
+      final ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
       final obj = TestLongTimeDisposableObject();
       scopedObjects.putIfAbsent(key, () => obj);
@@ -85,7 +85,7 @@ void main() {
     test(
         'remove when clearing, and then putIfAbsent, should override the value of key',
         () async {
-      ScopedObjects scopedObjects = ScopedObjects();
+      final ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
       final obj = TestLongTimeDisposableObject();
       scopedObjects.putIfAbsent(key, () => obj);
@@ -107,7 +107,7 @@ void main() {
     });
 
     test('get', () {
-      ScopedObjects scopedObjects = ScopedObjects();
+      final ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
       final obj = TestDisposableObject();
       scopedObjects.putIfAbsent(key, () => obj);
@@ -118,7 +118,7 @@ void main() {
     });
 
     test('clear', () async {
-      ScopedObjects scopedObjects = ScopedObjects();
+      final ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
       final obj = TestDisposableObject();
       scopedObjects.putIfAbsent(key, () => obj);
@@ -131,7 +131,7 @@ void main() {
 
   group('ScopedDisposableObjectMixin ', () {
     test('markDisposed', () async {
-      ScopedObjects scopedObjects = ScopedObjects();
+      final ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
       final obj = TestDisposableObject();
       scopedObjects.putIfAbsent(key, () => obj);
@@ -142,7 +142,7 @@ void main() {
     });
 
     test('markDisposed inside dispose', () async {
-      ScopedObjects scopedObjects = ScopedObjects();
+      final ScopedObjects scopedObjects = ScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
       final obj = MarkDisposeOnDisposeDisposableObject();
       scopedObjects.putIfAbsent(key, () => obj);
@@ -155,7 +155,7 @@ void main() {
 
   group('DisposableScopedObjects ', () {
     test('dispose', () async {
-      DisposableScopedObjects disposableScopedObjects =
+      final DisposableScopedObjects disposableScopedObjects =
           DisposableScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
       final obj = TestDisposableObject();
@@ -167,8 +167,8 @@ void main() {
     });
 
     test('dispose in ScopedObjects.clear', () async {
-      ScopedObjects scopedObjects = ScopedObjects();
-      DisposableScopedObjects disposableScopedObjects =
+      final ScopedObjects scopedObjects = ScopedObjects();
+      final DisposableScopedObjects disposableScopedObjects =
           DisposableScopedObjects();
       const key = TypedScopedKey(TestDisposableObject);
       final obj = TestDisposableObject();
