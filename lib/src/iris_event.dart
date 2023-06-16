@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import 'bindings/native_iris_event_bindings.dart';
+import 'package:iris_method_channel/src/bindings/native_iris_event_bindings.dart';
 
 const _libName = 'iris_method_channel';
 
@@ -29,7 +29,7 @@ ffi.DynamicLibrary _loadLib() {
   }
 
   if (Platform.isAndroid) {
-    return ffi.DynamicLibrary.open("lib$_libName.so");
+    return ffi.DynamicLibrary.open('lib$_libName.so');
   }
 
   return ffi.DynamicLibrary.open('$_libName.framework/$_libName');
@@ -59,19 +59,20 @@ class IrisEvent {
   }
 
   /// Parse message to [IrisEventMessage] object
+  // ignore: avoid_annotating_with_dynamic
   static IrisEventMessage parseMessage(dynamic message) {
     final dataList = List.from(message);
-    String event = dataList[0];
+    final String event = dataList[0];
     String data = dataList[1] as String;
     if (data.isEmpty) {
-      data = "{}";
+      data = '{}';
     }
 
     String res = dataList[1] as String;
     if (res.isEmpty) {
-      res = "{}";
+      res = '{}';
     }
-    List<Uint8List> buffers = dataList.length == 3
+    final List<Uint8List> buffers = dataList.length == 3
         ? List<Uint8List>.from(dataList[2])
         : <Uint8List>[];
 

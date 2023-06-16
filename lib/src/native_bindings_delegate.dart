@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:ffi' as ffi;
+import 'dart:isolate';
+
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
+import 'package:iris_method_channel/src/bindings/native_iris_api_common_bindings.dart'
+    as iris;
 import 'package:iris_method_channel/src/iris_event.dart';
-
-import 'bindings/native_iris_api_common_bindings.dart' as iris;
-import 'iris_method_channel.dart';
+import 'package:iris_method_channel/src/iris_method_channel.dart';
 
 // ignore_for_file: public_member_api_docs
 

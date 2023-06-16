@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi' as ffi;
 import 'dart:isolate';
 import 'dart:typed_data';
 
@@ -10,8 +11,6 @@ import 'package:iris_method_channel/src/iris_event.dart';
 import 'package:iris_method_channel/src/iris_method_channel.dart';
 import 'package:iris_method_channel/src/native_bindings_delegate.dart';
 import 'package:iris_method_channel/src/scoped_objects.dart';
-import 'dart:ffi' as ffi;
-
 import 'package:test/test.dart';
 
 class _ApiParam {
@@ -36,9 +35,7 @@ class _FakeNativeBindingDelegateMessenger {
   final apiCallPort = ReceivePort();
   final callApiRecords = <_CallApiRecord>[];
 
-  SendPort getSendPort() {
-    return apiCallPort.sendPort;
-  }
+  SendPort getSendPort() => apiCallPort.sendPort;
 }
 
 class _FakeNativeBindingDelegate extends NativeBindingDelegate {
@@ -246,7 +243,7 @@ void main() {
 
   group('Get InitilizationResult', () {
     test('able to get InitilizationResult from initilize', () async {
-      InitilizationResult? result = await irisMethodChannel.initilize([]);
+      final InitilizationResult? result = await irisMethodChannel.initilize([]);
       expect(result, isNotNull);
 
       expect(result!.irisApiEngineNativeHandle, 100);
@@ -258,7 +255,7 @@ void main() {
     test('get null InitilizationResult if initilize multiple times', () async {
       await irisMethodChannel.initilize([]);
 
-      InitilizationResult? result = await irisMethodChannel.initilize([]);
+      final InitilizationResult? result = await irisMethodChannel.initilize([]);
       expect(result, isNull);
 
       await irisMethodChannel.dispose();
