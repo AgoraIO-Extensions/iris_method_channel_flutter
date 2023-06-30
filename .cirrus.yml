@@ -10,7 +10,7 @@ default_macos_container: &default_macos_container
     image: ghcr.io/cirruslabs/macos-ventura-xcode:14
 
 android_build_task:
-  <<: *default_macos_container
+  <<: *default_filters
   <<: *default_macos_container
 
   matrix:
