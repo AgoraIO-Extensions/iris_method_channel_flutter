@@ -3,7 +3,7 @@ environment:
   MACOS_HOST_FLUTTER_SDK_DIR: /Users/admin/flutter
 
 default_filters: &default_filters
-  only_if: ($CIRRUS_REPO_OWNER == 'AgoraIO-Extensions' && $CIRRUS_PR != '') || $CIRRUS_PR_LABELS =~ '.*ci:skip.*'
+  skip: $CIRRUS_REPO_OWNER != 'AgoraIO-Extensions' || $CIRRUS_PR == '' || $CIRRUS_PR_LABELS =~ '.*ci:skip.*'
 
 default_macos_container: &default_macos_container
   macos_instance:
@@ -11,8 +11,7 @@ default_macos_container: &default_macos_container
 
 android_build_task:
   <<: *default_macos_container
-
-  skip: $CIRRUS_PR == '' || $CIRRUS_PR_LABELS =~ '.*ci:skip.*'
+  <<: *default_macos_container
 
   matrix:
     - name: FLUTTER_VERSION 3.10.0
