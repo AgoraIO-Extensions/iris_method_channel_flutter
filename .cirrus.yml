@@ -12,7 +12,7 @@ default_macos_container: &default_macos_container
 android_build_task:
   <<: *default_macos_container
 
-  skip: $CIRRUS_REPO_OWNER != 'AgoraIO-Extensions' || $CIRRUS_PR == '' || $CIRRUS_PR_LABELS =~ '.*ci:skip.*'
+  skip: $CIRRUS_REPO_OWNER != 'AgoraIO-Extensions' || $CIRRUS_PR_LABELS =~ '.*ci:skip.*'
 
   matrix:
     - name: FLUTTER_VERSION 3.10.0
