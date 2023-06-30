@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0...1.2.0) (2023-06-30)
+
+
+### Bug Fixes
+
+* Fix android build in some ubuntu ([777bcd6](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/777bcd646e12b104c7b5d8a9328ff9daae2e6dc2))
+
 ## [1.1.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.5...1.1.0) (2023-05-16)
 
 
