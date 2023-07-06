@@ -32,7 +32,7 @@ ffi.DynamicLibrary _loadLib() {
     return ffi.DynamicLibrary.open('lib$_libName.so');
   }
 
-  return ffi.DynamicLibrary.open('$_libName.framework/$_libName');
+  return ffi.DynamicLibrary.process();
 }
 
 /// Object to hold the iris event infos

@@ -1,4 +1,5 @@
 #import "IrisMethodChannelPlugin.h"
+#include "../../src/iris_event.h"
 
 @implementation IrisMethodChannelPlugin
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
@@ -15,6 +16,16 @@
   } else {
     result(FlutterMethodNotImplemented);
   }
+}
+
+/// dummy function to avoid symbols striping when building static library.
++ (void)_irisMethodChannelDummyFunc {
+  EventParam p;
+	InitDartApiDL(NULL);
+  Dispose();
+  OnEvent(NULL);
+  RegisterDartPort(0);
+  UnregisterDartPort(0);
 }
 
 @end
