@@ -12,8 +12,6 @@ void main() {
         (tester) async {
       await tester.pumpAndSettle();
 
-
-
       IrisEvent irisEvent = IrisEvent();
       irisEvent.initialize();
       final testPort = ReceivePort();
