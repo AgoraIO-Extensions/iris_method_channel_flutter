@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0...1.2.0) (2023-07-07)
+
+
+### Bug Fixes
+
+* Fix "Failed to load dynamic library 'iris_method_channel.framework/iris_method_channel' after remove the use_frameworks! in Podfile" ([#72](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/72)) ([7339cde](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/7339cdeebafe2b03658a26339b3442d1d1403ae3))
+* Fix android build in some ubuntu ([777bcd6](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/777bcd646e12b104c7b5d8a9328ff9daae2e6dc2))
+
 ## [1.1.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0-rc.5...1.1.0) (2023-05-16)
 
 
