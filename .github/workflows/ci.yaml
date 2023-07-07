@@ -251,9 +251,11 @@ jobs:
           flutter-version: '3.10.0' # Run the latest version
           cache: true
       - name: run android integration test
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@v2.21.0
         with:
-          api-level: 30
+          api-level: 31
+          arch: x86_64
+          profile: Nexus 6
           script: |
             cd example
             flutter packages get
