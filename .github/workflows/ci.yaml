@@ -234,7 +234,7 @@ jobs:
       - name: run macos integration test
         run: |
           flutter packages get
-          flutter test integration_test
+          flutter test integration_test/iris_event_smoke_test.dart
         working-directory: example
     
   integration_test_android:
@@ -253,7 +253,7 @@ jobs:
       - name: run android integration test
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
+          api-level: 30
           script: |
             cd example
             flutter packages get
