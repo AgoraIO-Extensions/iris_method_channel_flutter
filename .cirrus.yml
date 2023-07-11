@@ -9,32 +9,43 @@ default_macos_container: &default_macos_container
   macos_instance:
     image: ghcr.io/cirruslabs/macos-ventura-xcode:14
 
+# android_build_task:
+#   <<: *default_macos_container
+
+#   skip: $CIRRUS_REPO_OWNER != 'AgoraIO-Extensions' || $CIRRUS_PR_LABELS =~ '.*ci:skip.*'
+
+#   matrix:
+#     - name: FLUTTER_VERSION 3.10.0
+#       env:
+#         FLUTTER_VERSION: 3.10.0
+#   switch_flutter_version_script:
+#     - cd ${MACOS_HOST_FLUTTER_SDK_DIR}
+#     - git fetch
+#     - git checkout ${FLUTTER_VERSION} && flutter precache
+
+#   matrix:
+#     - name: Build android on macos arm
+#       build_android_arm64_script:
+#         - cd example
+#         - flutter doctor -v
+#         - flutter packages get
+#         - flutter build apk
+
+#     - name: Build ios on macos arm
+#       build_android_arm64_script:
+#         - cd example
+#         - flutter doctor -v
+#         - flutter clean
+#         - flutter packages get
+#         - flutter build ios --no-codesign
+
 android_build_task:
   <<: *default_macos_container
-
-  skip: $CIRRUS_REPO_OWNER != 'AgoraIO-Extensions' || $CIRRUS_PR_LABELS =~ '.*ci:skip.*'
 
   matrix:
     - name: FLUTTER_VERSION 3.10.0
       env:
         FLUTTER_VERSION: 3.10.0
   switch_flutter_version_script:
-    - cd ${MACOS_HOST_FLUTTER_SDK_DIR}
-    - git fetch
-    - git checkout ${FLUTTER_VERSION} && flutter precache
+    - echo "CIRRUS_PR_LABELS: ${$CIRRUS_PR_LABELS}"
 
-  matrix:
-    - name: Build android on macos arm
-      build_android_arm64_script:
-        - cd example
-        - flutter doctor -v
-        - flutter packages get
-        - flutter build apk
-
-    - name: Build ios on macos arm
-      build_android_arm64_script:
-        - cd example
-        - flutter doctor -v
-        - flutter clean
-        - flutter packages get
-        - flutter build ios --no-codesign
