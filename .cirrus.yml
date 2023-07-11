@@ -47,5 +47,5 @@ android_build_task:
       env:
         FLUTTER_VERSION: 3.10.0
   switch_flutter_version_script:
-    - echo "CIRRUS_PR_LABELS ${$CIRRUS_PR_LABELS}""
+    - echo "CIRRUS_PR_LABELS ${$CIRRUS_PR_LABELS}"
 
