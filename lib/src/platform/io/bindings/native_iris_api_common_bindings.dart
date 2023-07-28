@@ -20,7 +20,7 @@ class ApiParam extends ffi.Struct {
   external int buffer_count;
 }
 
-typedef IrisEventHandlerHandle = ffi.Pointer<ffi.Void>;
+// typedef IrisEventHandlerHandle = ffi.Pointer<ffi.Void>;
 
 class IrisCEventHandler extends ffi.Struct {
   external Func_Event OnEvent;
