@@ -5,7 +5,7 @@ import 'dart:isolate';
 import 'package:async/async.dart';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart'
-    show SynchronousFuture, VoidCallback, visibleForTesting;
+    show SynchronousFuture, VoidCallback, debugPrint, visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:iris_method_channel/src/bindings/native_iris_api_common_bindings.dart'
     as iris;
@@ -406,6 +406,7 @@ class IrisMethodChannel {
   void _setuponDetachedFromEngineListener() {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'onDetachedFromEngine_fromPlatform') {
+        debugPrint('Receive the onDetachedFromEngine callback, clean the native resources.');
         dispose();
         return true;
       }
