@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:ffi' as ffi;
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:async/async.dart';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart'
     show SynchronousFuture, VoidCallback, debugPrint, visibleForTesting;
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart' show MethodChannel;
 import 'package:iris_method_channel/src/bindings/native_iris_api_common_bindings.dart'
     as iris;
 import 'package:iris_method_channel/src/iris_event.dart';
