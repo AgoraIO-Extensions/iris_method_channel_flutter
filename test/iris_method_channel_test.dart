@@ -452,8 +452,8 @@ void main() {
   test('disposed after receive onDetachedFromEngine_fromPlatform', () async {
     await irisMethodChannel.initilize([]);
 
+    // Simulate the `MethodChannel` call from native side
     const StandardMethodCodec codec = StandardMethodCodec();
-
     final ByteData data = codec.encodeMethodCall(const MethodCall(
       'onDetachedFromEngine_fromPlatform',
     ));
