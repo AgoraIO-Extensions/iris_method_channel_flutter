@@ -7,6 +7,7 @@ import 'package:async/async.dart';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart'
     show SynchronousFuture, VoidCallback, visibleForTesting;
+import 'package:flutter/services.dart';
 import 'package:iris_method_channel/src/bindings/native_iris_api_common_bindings.dart'
     as iris;
 import 'package:iris_method_channel/src/iris_event.dart';
@@ -139,7 +140,7 @@ class _Messenger implements DisposableObject {
 
   @override
   Future<void> dispose() async {
-    if (!_isDisposed) {
+    if (_isDisposed) {
       return;
     }
     _isDisposed = true;
@@ -309,6 +310,8 @@ class IrisMethodChannel {
   late Isolate workerIsolate;
   late _HotRestartFinalizer _hotRestartFinalizer;
 
+  final MethodChannel _channel = const MethodChannel('iris_method_channel');
+
   static Future<void> _execute(_InitilizationArgs args) async {
     final SendPort mainApiCallSendPort = args.apiCallPortSendPort;
     final SendPort mainEventSendPort = args.eventPortSendPort;
@@ -401,6 +404,17 @@ class IrisMethodChannel {
     Isolate.exit(onExitSendPort, 0);
   }
 
+  void _setuponDetachedFromEngineListener() {
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'onDetachedFromEngine_fromPlatform') {
+        dispose();
+        return true;
+      }
+
+      return false;
+    });
+  }
+
   Future<InitilizationResult?> initilize(List<int> args) async {
     if (_initilized) {
       return null;
@@ -408,6 +422,8 @@ class IrisMethodChannel {
 
     final apiCallPort = ReceivePort();
     final eventPort = ReceivePort();
+
+    _setuponDetachedFromEngineListener();
 
     _hotRestartFinalizer = _HotRestartFinalizer(_nativeBindingsProvider);
 
