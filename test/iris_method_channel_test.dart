@@ -228,8 +228,7 @@ class _TestEventLoopEventHandler extends EventLoopEventHandler {
 }
 
 void main() {
-  final TestWidgetsFlutterBinding binding =
-      TestWidgetsFlutterBinding.ensureInitialized();
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
 
   late _FakeNativeBindingDelegateMessenger messenger;
   late NativeBindingsProvider nativeBindingsProvider;
