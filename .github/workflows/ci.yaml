@@ -197,7 +197,7 @@ jobs:
   integration_test_ios:
     name: ios integration test
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: macos-12
+    runs-on: macos-13
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
