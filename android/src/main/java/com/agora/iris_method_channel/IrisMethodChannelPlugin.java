@@ -24,15 +24,13 @@ public class IrisMethodChannelPlugin implements FlutterPlugin, MethodCallHandler
 
   @Override
   public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-    if (call.method.equals("getPlatformVersion")) {
-      result.success("Android " + android.os.Build.VERSION.RELEASE);
-    } else {
-      result.notImplemented();
-    }
+    result.notImplemented();
   }
 
   @Override
   public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+    // Notify the dart side to call the `IrisMethodChannel.dispose` to clear the resources.
+    channel.invokeMethod("onDetachedFromEngine_fromPlatform",  null);
     channel.setMethodCallHandler(null);
   }
 }

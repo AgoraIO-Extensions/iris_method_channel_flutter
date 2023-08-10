@@ -197,7 +197,7 @@ jobs:
   integration_test_ios:
     name: ios integration test
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: macos-12
+    runs-on: macos-13
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -205,9 +205,9 @@ jobs:
         with:
           flutter-version: '3.10.0' # Run the latest version
           cache: true
-      - uses: futureware-tech/simulator-action@v1
+      - uses: futureware-tech/simulator-action@v2
         with:
-          model: 'iPhone 13 Pro Max'
+          model: 'iPhone 14 Pro Max'
       - name: ios integration test
         run: |
           flutter packages get

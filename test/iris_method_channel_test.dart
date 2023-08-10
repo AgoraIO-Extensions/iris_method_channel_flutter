@@ -4,6 +4,8 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'package:flutter/services.dart' show StandardMethodCodec, MethodCall;
+import 'package:flutter_test/flutter_test.dart';
 import 'package:iris_method_channel/src/bindings/native_iris_api_common_bindings.dart';
 import 'package:iris_method_channel/src/bindings/native_iris_event_bindings.dart'
     as iris_event;
@@ -11,7 +13,6 @@ import 'package:iris_method_channel/src/iris_event.dart';
 import 'package:iris_method_channel/src/iris_method_channel.dart';
 import 'package:iris_method_channel/src/native_bindings_delegate.dart';
 import 'package:iris_method_channel/src/scoped_objects.dart';
-import 'package:test/test.dart';
 
 class _ApiParam {
   _ApiParam(this.event, this.data);
@@ -227,6 +228,8 @@ class _TestEventLoopEventHandler extends EventLoopEventHandler {
 }
 
 void main() {
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+
   late _FakeNativeBindingDelegateMessenger messenger;
   late NativeBindingsProvider nativeBindingsProvider;
   late IrisMethodChannel irisMethodChannel;
@@ -414,6 +417,61 @@ void main() {
     expect(registerEventHandlerCallRecord.length, 1);
 
     await irisMethodChannel.dispose();
+  });
+
+  test('disposed', () async {
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.dispose();
+    // Wait for `dispose` completed.
+    await Future.delayed(const Duration(milliseconds: 500));
+    final callRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
+    expect(callRecord1.length, 1);
+
+    final callRecord2 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
+    expect(callRecord2.length, 1);
+  });
+
+  test('disposed multiple times', () async {
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.dispose();
+    await irisMethodChannel.dispose();
+    // Wait for `dispose` completed.
+    await Future.delayed(const Duration(milliseconds: 500));
+    final callRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
+    expect(callRecord1.length, 1);
+
+    final callRecord2 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
+    expect(callRecord2.length, 1);
+  });
+
+  test('disposed after receive onDetachedFromEngine_fromPlatform', () async {
+    await irisMethodChannel.initilize([]);
+
+    // Simulate the `MethodChannel` call from native side
+    const StandardMethodCodec codec = StandardMethodCodec();
+    final ByteData data = codec.encodeMethodCall(const MethodCall(
+      'onDetachedFromEngine_fromPlatform',
+    ));
+    await binding.defaultBinaryMessenger.handlePlatformMessage(
+      'iris_method_channel',
+      data,
+      (ByteData? data) {},
+    );
+
+    // Wait for the `iris_method_channel` method channel call completed.
+    await Future.delayed(const Duration(milliseconds: 1000));
+
+    final callRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
+    expect(callRecord1.length, 1);
+
+    final callRecord2 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
+    expect(callRecord2.length, 1);
   });
 
   test('invokeMethod after disposed', () async {
