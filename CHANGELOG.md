@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.2.0...1.2.1) (2023-08-10)
+
+
+### Bug Fixes
+
+* [android] Bound the IrisMethodChannel lifecycle with the FlutterEngine ([#75](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/75)) ([7249bf0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/7249bf06b794572d405461b3e7c3b2a0d242a017))
+
 ## [1.2.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.1.0...1.2.0) (2023-07-07)
 
 
