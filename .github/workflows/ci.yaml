@@ -157,7 +157,7 @@ jobs:
         working-directory: example
 
   build_web_ubuntu:
-    name: Build Android on Ubuntu
+    name: Build Web on Ubuntu
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
