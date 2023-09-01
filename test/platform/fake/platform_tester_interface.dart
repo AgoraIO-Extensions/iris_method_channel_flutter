@@ -21,5 +21,3 @@ abstract class PlatformTesterInterface {
 
   CallApiRecorderInterface getCallApiRecorder();
 }
-
-

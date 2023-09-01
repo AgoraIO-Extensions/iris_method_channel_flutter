@@ -81,7 +81,7 @@ class InitilizationResultIO implements InitilizationResult {
   final SendPort _apiCallPortSendPort;
   final int irisApiEngineNativeHandle;
 
-  /// Same as [CreateNativeApiEngineResult.extraData]
+  /// Same as [CreateApiEngineResult.extraData]
   final Map<String, Object> extraData;
 
   final int? _debugIrisCEventHandlerNativeHandle;
@@ -559,32 +559,6 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
       final eventMessage = parseMessage(message);
 
       _irisEventMessageListener?.call(eventMessage);
-
-      // bool handled = false;
-      // for (final sub in scopedEventHandlers.values) {
-      //   final scopedObjects = sub as DisposableScopedObjects;
-      //   for (final es in scopedObjects.values) {
-      //     final EventHandlerHolder eh = es as EventHandlerHolder;
-      //     // We need the event handlers with the same _EventHandlerHolderKey consume the message.
-      //     for (final e in eh.getEventHandlers()) {
-      //       if (e.handleEvent(
-      //           eventMessage.event, eventMessage.data, eventMessage.buffers)) {
-      //         handled = true;
-      //       }
-      //     }
-
-      //     // Break the loop after the event handlers in the same EventHandlerHolder
-      //     // consume the message.
-      //     if (handled) {
-      //       break;
-      //     }
-      //   }
-
-      //   // Break the loop if there is an EventHandlerHolder consume the message.
-      //   if (handled) {
-      //     break;
-      //   }
-      // }
     });
 
     _initilized = true;
@@ -600,16 +574,17 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
     _initilized = false;
     _irisEventMessageListener = null;
     _hotRestartFinalizer.dispose();
-    // await scopedEventHandlers.clear();
     await _evntSubscription.cancel();
 
     await _messenger.dispose();
   }
 
+  @override
   VoidCallback addHotRestartListener(HotRestartListener listener) {
     return _hotRestartFinalizer.addHotRestartListener(listener);
   }
 
+  @override
   void removeHotRestartListener(HotRestartListener listener) {
     _hotRestartFinalizer.removeHotRestartListener(listener);
   }
@@ -633,6 +608,7 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
     return _messenger.listSend(request);
   }
 
+  @override
   void setIrisEventMessageListener(IrisEventMessageListener listener) {
     _irisEventMessageListener = listener;
   }

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show VoidCallback, debugPrint;
-import 'package:flutter/services.dart';
 import 'package:iris_method_channel/iris_method_channel.dart';
 import 'package:iris_method_channel/src/platform/web/iris_event_web.dart';
 

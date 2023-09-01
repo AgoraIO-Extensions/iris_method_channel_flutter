@@ -92,7 +92,7 @@ class DestroyNativeEventHandlerListRequest extends IrisMethodCallListRequest {
 ///
 /// NOTE that:
 /// * This listener is only received on debug mode.
-/// * You should not comunicate with the [IrisMethodChannel] anymore inside this listener.
+/// * You should not comunicate with the `IrisMethodChannel` anymore inside this listener.
 /// * You should not do some asynchronous jobs inside this listener.
 typedef HotRestartListener = void Function(Object? message);
 
