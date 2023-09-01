@@ -1,9 +1,9 @@
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show VoidCallback, SynchronousFuture;
 import 'package:iris_method_channel/src/iris_handles.dart';
 import 'package:iris_method_channel/src/platform/iris_event_interface.dart';
 import 'package:iris_method_channel/src/scoped_objects.dart';
-
 
 // ignore_for_file: public_member_api_docs
 
