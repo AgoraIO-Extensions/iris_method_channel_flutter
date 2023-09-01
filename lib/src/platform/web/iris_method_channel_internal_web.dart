@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show VoidCallback;
+import 'package:flutter/foundation.dart' show VoidCallback, debugPrint;
 import 'package:flutter/services.dart';
 import 'package:iris_method_channel/iris_method_channel.dart';
 import 'package:iris_method_channel/src/platform/web/iris_event_web.dart';
@@ -38,13 +38,11 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
   @override
   Future<CallApiResult> execute(Request request) async {
     if (request is CreateNativeEventHandlerRequest) {
-      print('CreateNativeEventHandlerRequest not implement yet.');
       return CallApiResult(irisReturnCode: 0, data: {'observerIntPtr': 0});
     } else if (request is ApiCallRequest) {
       final IrisMethodCall methodCall = request.methodCall;
       return _executeMethodCall(methodCall);
     } else {
-      print('${request} not implement yet.');
       return CallApiResult(irisReturnCode: 0, data: {'result': 0});
     }
   }
@@ -55,8 +53,6 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
     // instead.
     final ret = await _platformBindingsDelegate!
         .callApiAsync(methodCall, _irisApiEngine!, const IrisApiParamHandle(0));
-
-    print('_executeMethodCall web ${ret.irisReturnCode}, ${ret.data}');
 
     return ret;
   }
@@ -92,7 +88,7 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
         results.add(result);
       }
     } else if (request is DestroyNativeEventHandlerListRequest) {
-      print('[listExecute] Not implemented request: $request');
+      debugPrint('[listExecute] Not implemented request: $request');
     }
 
     return results;

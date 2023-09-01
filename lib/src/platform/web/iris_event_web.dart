@@ -34,7 +34,6 @@ class IrisEventWeb implements IrisEvent {
 
   void _onEventFromJS(js.EventParam param) {
     if (_irisEventMessageListener != null) {
-      print('_onEventFromJS ${param}');
       _irisEventMessageListener?.call(js.toIrisEventMessage(param));
     }
   }

@@ -44,7 +44,7 @@ class _Messenger implements DisposableObject {
 
   @override
   Future<void> dispose() async {
-    if (!_isDisposed) {
+    if (_isDisposed) {
       return;
     }
     _isDisposed = true;

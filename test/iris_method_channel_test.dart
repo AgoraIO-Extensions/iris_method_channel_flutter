@@ -212,9 +212,12 @@ void main() {
         .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
     expect(callRecord1.length, 1);
 
-    final callRecord2 = messenger.callApiRecords
-        .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
-    expect(callRecord2.length, 1);
+    // On web, we do not call the `destroyIrisEventHandler`
+    if (!kIsWeb) {
+      final callRecord2 = messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
+      expect(callRecord2.length, 1);
+    }
   });
 
   test('disposed multiple times', () async {
@@ -227,9 +230,12 @@ void main() {
         .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
     expect(callRecord1.length, 1);
 
-    final callRecord2 = messenger.callApiRecords
-        .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
-    expect(callRecord2.length, 1);
+    // On web, we do not call the `destroyIrisEventHandler`
+    if (!kIsWeb) {
+      final callRecord2 = messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
+      expect(callRecord2.length, 1);
+    }
   });
 
   test('disposed after receive onDetachedFromEngine_fromPlatform', () async {
@@ -253,9 +259,12 @@ void main() {
         .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
     expect(callRecord1.length, 1);
 
-    final callRecord2 = messenger.callApiRecords
-        .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
-    expect(callRecord2.length, 1);
+    // On web, we do not call the `destroyIrisEventHandler`
+    if (!kIsWeb) {
+      final callRecord2 = messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
+      expect(callRecord2.length, 1);
+    }
   });
 
   test('invokeMethod after disposed', () async {
