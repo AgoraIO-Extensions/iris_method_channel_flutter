@@ -17,7 +17,7 @@ class IrisEventWeb implements IrisEvent {
   js.IrisEventHandlerHandle? _irisEventHandlerJS;
 
   void initialize() {
-        final irisCEventHandlerJS = allowInterop(_onEventFromJS);
+    final irisCEventHandlerJS = allowInterop(_onEventFromJS);
 
     _irisEventHandlerJS = js.CreateIrisEventHandler(irisCEventHandlerJS);
     js.SetIrisRtcEngineEventHandler(
