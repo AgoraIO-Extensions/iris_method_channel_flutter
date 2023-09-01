@@ -9,10 +9,15 @@ import 'package:js/js.dart';
 
 // ignore_for_file: public_member_api_docs, non_constant_identifier_names
 
+// NOTE:
+// For compatibility to dart sdk >= 2.12, we only use the feature that are 
+// supported in `js: 0.6.3` at this time
+
 @JS('AgoraWrapper.EventParam')
-@staticInterop
+@anonymous
 class EventParam {
-  external factory EventParam(
+  // Must have an unnamed factory constructor with named arguments.
+  external factory EventParam({
     String event,
     String data,
     int data_size,
@@ -20,17 +25,15 @@ class EventParam {
     List<Object> buffer,
     List<int> length,
     int buffer_count,
-  );
-}
+  });
 
-extension on EventParam {
-  external String event;
-  external String data;
-  external int data_size;
-  external String result;
-  external List<Object> buffer;
-  external List<int> length;
-  external int buffer_count;
+  external String get event;
+  external String get data;
+  external int get data_size;
+  external String get result;
+  external List<Object> get buffer;
+  external List<int> get length;
+  external int get buffer_count;
 }
 
 IrisEventMessage toIrisEventMessage(EventParam param) {
@@ -40,17 +43,15 @@ IrisEventMessage toIrisEventMessage(EventParam param) {
 typedef ApiParam = EventParam;
 
 @JS('AgoraWrapper.CallIrisApiResult')
-@staticInterop
+@anonymous
 class CallIrisApiResult {
-  external factory CallIrisApiResult(
+  external factory CallIrisApiResult({
     int code,
     String data,
-  );
-}
+  });
 
-extension on CallIrisApiResult {
-  external int code;
-  external String data;
+  external int get code;
+  external String get data;
 }
 
 extension CallIrisApiResultExt on CallIrisApiResult {
@@ -60,16 +61,14 @@ extension CallIrisApiResultExt on CallIrisApiResult {
   }
 }
 
-@JS('AgoraWrapper.IrisCEventHandler')
-@staticInterop
-class IrisCEventHandler {}
+typedef IrisCEventHandler = void Function(EventParam param);
 
 @JS('AgoraWrapper.IrisEventHandlerHandle')
-@staticInterop
+@anonymous
 class IrisEventHandlerHandle {}
 
 @JS('AgoraWrapper.IrisApiEngine')
-@staticInterop
+@anonymous
 class IrisApiEngine {}
 
 @JS('AgoraWrapper.CreateIrisApiEngine')
@@ -86,18 +85,6 @@ external Future<CallIrisApiResult> CallIrisApiAsync(
     IrisApiEngine engine_ptr, ApiParam apiParam);
 
 typedef IrisCEventHandlerDartCallback = void Function(EventParam param);
-
-@JSExport()
-class IrisCEventHandlerDartExport {
-  IrisCEventHandlerDartExport(this._callback);
-
-  final IrisCEventHandlerDartCallback _callback;
-
-  @JSExport('onEvent')
-  void onEvent(EventParam param) {
-    _callback(param);
-  }
-}
 
 @JS('AgoraWrapper.CreateIrisEventHandler')
 external IrisEventHandlerHandle CreateIrisEventHandler(
