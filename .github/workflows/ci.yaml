@@ -197,7 +197,7 @@ jobs:
       - run: flutter test
 
   run_flutter_unit_test_web:
-    name: Run flutter unit test
+    name: Run flutter unit test web
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
