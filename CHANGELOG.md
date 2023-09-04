@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.0-dev.1](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.2.2...2.0.0-dev.1) (2023-09-04)
+
+
+### Features
+
+* Refactor to work with flutter web ([#79](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/79)) ([bfbb3c8](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/bfbb3c8525778dd4c64c65dc6287e5e24e52ee50))
+
 ## [1.2.2](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.2.1...1.2.2) (2023-08-21)
 
 
