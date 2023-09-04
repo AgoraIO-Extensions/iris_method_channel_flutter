@@ -21,13 +21,13 @@ class _FakePlatformBindingsDelegateInterface
 
   @override
   CreateApiEngineResult createApiEngine(List<Object> args) {
-    return CreateApiEngineResult(IrisApiEngineHandle(0));
+    return const CreateApiEngineResult(IrisApiEngineHandle(0));
   }
 
   @override
   IrisEventHandlerHandle createIrisEventHandler(
       IrisCEventHandlerHandle eventHandler) {
-    return IrisEventHandlerHandle(0);
+    return const IrisEventHandlerHandle(0);
   }
 
   @override
@@ -55,7 +55,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
+  final String _platformVersion = 'Unknown';
 
   @override
   void initState() {
