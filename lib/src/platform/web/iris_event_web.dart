@@ -1,9 +1,8 @@
-import 'dart:js_util';
-
 import 'package:iris_method_channel/src/iris_handles.dart';
 import 'package:iris_method_channel/src/platform/iris_event_interface.dart';
 import 'package:iris_method_channel/src/platform/web/bindings/iris_api_common_bindings_js.dart'
     as js;
+import 'package:js/js.dart' show allowInterop;
 
 // ignore_for_file: public_member_api_docs
 
