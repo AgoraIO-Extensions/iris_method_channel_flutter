@@ -1,7 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:iris_method_channel/iris_method_channel.dart';
 
 void main() {
   runApp(const MyApp());
+}
+
+class _FakePlatformBindingsDelegateInterface
+    implements PlatformBindingsDelegateInterface {
+  @override
+  int callApi(IrisMethodCall methodCall, IrisApiEngineHandle apiEnginePtr,
+      IrisApiParamHandle param) {
+    return 0;
+  }
+
+  @override
+  Future<CallApiResult> callApiAsync(IrisMethodCall methodCall,
+      IrisApiEngineHandle apiEnginePtr, IrisApiParamHandle param) async {
+    return CallApiResult(irisReturnCode: 0, data: {});
+  }
+
+  @override
+  CreateApiEngineResult createApiEngine(List<Object> args) {
+    return CreateApiEngineResult(IrisApiEngineHandle(0));
+  }
+
+  @override
+  IrisEventHandlerHandle createIrisEventHandler(
+      IrisCEventHandlerHandle eventHandler) {
+    return IrisEventHandlerHandle(0);
+  }
+
+  @override
+  void destroyIrisEventHandler(IrisEventHandlerHandle handler) {}
+
+  @override
+  void destroyNativeApiEngine(IrisApiEngineHandle apiEnginePtr) {}
+
+  @override
+  void initialize() {}
+}
+
+class _FakePlatformBindingsProvider extends PlatformBindingsProvider {
+  @override
+  PlatformBindingsDelegateInterface provideNativeBindingDelegate() {
+    return _FakePlatformBindingsDelegateInterface();
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -22,16 +65,10 @@ class _MyAppState extends State<MyApp> {
 
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
-    String platformVersion = '';
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
+    IrisMethodChannel irisMethodChannel =
+        IrisMethodChannel(_FakePlatformBindingsProvider());
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.dispose();
   }
 
   @override
