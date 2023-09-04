@@ -1,4 +1,4 @@
-// ignore_for_file: camel_case_types, non_constant_identifier_names
+// ignore_for_file: camel_case_types, non_constant_identifier_names, public_member_api_docs
 
 import 'dart:ffi' as ffi;
 
@@ -20,7 +20,7 @@ class ApiParam extends ffi.Struct {
   external int buffer_count;
 }
 
-typedef IrisEventHandlerHandle = ffi.Pointer<ffi.Void>;
+// typedef IrisEventHandlerHandle = ffi.Pointer<ffi.Void>;
 
 class IrisCEventHandler extends ffi.Struct {
   external Func_Event OnEvent;

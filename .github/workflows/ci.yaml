@@ -156,6 +156,27 @@ jobs:
         run: flutter build apk
         working-directory: example
 
+  build_web_ubuntu:
+    name: Build Web on Ubuntu
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    strategy:
+      matrix:
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3', '3.10.0']
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ matrix.version }}
+          cache: true
+      - run: flutter pub get
+      - name: Run flutter build web
+        run: flutter build web
+        working-directory: example
+
   run_flutter_unit_test:
     name: Run flutter unit test
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
@@ -175,6 +196,25 @@ jobs:
       - run: flutter packages get
       - run: flutter test
 
+  run_flutter_unit_test_web:
+    name: Run flutter unit test web
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    strategy:
+      matrix:
+        version: ['2.10.5', '3.0.0', '3.3.9', '3.7.3', '3.10.0']
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - uses: subosito/flutter-action@v1
+        with:
+          flutter-version: ${{ matrix.version }}
+          cache: true
+      - run: flutter packages get
+      - run: flutter test -d chrome
+
   integration_test_windows:
     name: windows integration test
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
@@ -191,7 +231,7 @@ jobs:
       - name: windows integration test
         run: |
           flutter packages get
-          flutter test integration_test
+          flutter test integration_test -d windows
         working-directory: example
     
   integration_test_ios:
@@ -234,7 +274,7 @@ jobs:
       - name: run macos integration test
         run: |
           flutter packages get
-          flutter test integration_test/iris_event_smoke_test.dart
+          flutter test integration_test/iris_event_smoke_test.dart -d macos
         working-directory: example
     
   integration_test_android:
