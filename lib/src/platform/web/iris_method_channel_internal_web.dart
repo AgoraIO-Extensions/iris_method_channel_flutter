@@ -1,7 +1,10 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show VoidCallback, debugPrint;
+import 'dart:js';
+import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:iris_method_channel/iris_method_channel.dart';
-import 'package:iris_method_channel/src/platform/web/iris_event_web.dart';
+
+import 'package:iris_method_channel/src/platform/web/bindings/iris_api_common_bindings_js.dart'
+    as js_binding;
 
 // ignore_for_file: public_member_api_docs
 
@@ -13,9 +16,14 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
   IrisMethodChannelInternalWeb(this._nativeBindingsProvider);
 
   final PlatformBindingsProvider _nativeBindingsProvider;
-  IrisEventWeb? _irisEventWeb;
   IrisApiEngineHandle? _irisApiEngine;
   PlatformBindingsDelegateInterface? _platformBindingsDelegate;
+
+  IrisEventMessageListener? _irisEventMessageListener;
+
+  js_binding.IrisCEventHandler? _irisEventHandlerFuncJS;
+
+  IrisEventHandlerHandle? _irisEventHandlerHandle;
 
   @override
   VoidCallback addHotRestartListener(HotRestartListener listener) {
@@ -26,18 +34,42 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
   Future<void> dispose() async {
     assert(_irisApiEngine != null);
 
-    _irisEventWeb?.dispose();
-    _irisEventWeb = null;
-
     _platformBindingsDelegate?.destroyNativeApiEngine(_irisApiEngine!);
+
+    _platformBindingsDelegate
+        ?.destroyIrisEventHandler(_irisEventHandlerHandle!);
+
     _platformBindingsDelegate = null;
     _irisApiEngine = null;
+    _irisEventHandlerFuncJS = null;
+    _irisEventHandlerHandle = null;
+    _irisEventMessageListener = null;
   }
 
   @override
   Future<CallApiResult> execute(Request request) async {
     if (request is CreateNativeEventHandlerRequest) {
-      return CallApiResult(irisReturnCode: 0, data: {'observerIntPtr': 0});
+      final methodCall = request.methodCall;
+
+      await _executeMethodCall(IrisMethodCall(
+        methodCall.funcName,
+        methodCall.params,
+        rawBufferParams: [
+          BufferParam(BufferParamHandle(_irisEventHandlerHandle!()), 1)
+        ],
+      ));
+
+      return CallApiResult(
+        irisReturnCode: 0,
+        data: {'observerIntPtr': _irisEventHandlerHandle},
+      );
+    } else if (request is DestroyNativeEventHandlerRequest) {
+      final methodCall = request.methodCall;
+      if (methodCall.funcName.isEmpty) {
+        return CallApiResult(irisReturnCode: 0, data: {'result': 0});
+      }
+
+      return _executeMethodCall(methodCall);
     } else if (request is ApiCallRequest) {
       final IrisMethodCall methodCall = request.methodCall;
       return _executeMethodCall(methodCall);
@@ -61,6 +93,12 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
     return 0;
   }
 
+  void _onEventFromJS(js_binding.EventParam param) {
+    if (_irisEventMessageListener != null) {
+      _irisEventMessageListener?.call(js_binding.toIrisEventMessage(param));
+    }
+  }
+
   @override
   Future<InitilizationResult?> initilize(List<int> args) async {
     _platformBindingsDelegate =
@@ -69,10 +107,9 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
         _platformBindingsDelegate!.createApiEngine(args);
     _irisApiEngine = createApiEngineResult.apiEnginePtr;
 
-    final irisEvent = _nativeBindingsProvider.provideIrisEvent() ??
-        IrisEventWeb(_irisApiEngine!);
-    _irisEventWeb = irisEvent as IrisEventWeb;
-    _irisEventWeb!.initialize();
+    _irisEventHandlerFuncJS = allowInterop(_onEventFromJS);
+    _irisEventHandlerHandle = _platformBindingsDelegate!.createIrisEventHandler(
+        IrisCEventHandlerHandle(_irisEventHandlerFuncJS!));
 
     return InitilizationResultWeb();
   }
@@ -87,7 +124,11 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
         results.add(result);
       }
     } else if (request is DestroyNativeEventHandlerListRequest) {
-      debugPrint('[listExecute] Not implemented request: $request');
+      final methodCalls = request.methodCalls;
+      for (final methodCall in methodCalls) {
+        final result = await _executeMethodCall(methodCall);
+        results.add(result);
+      }
     }
 
     return results;
@@ -98,6 +139,6 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
 
   @override
   void setIrisEventMessageListener(IrisEventMessageListener listener) {
-    _irisEventWeb!.setIrisEventMessageListener(listener);
+    _irisEventMessageListener = listener;
   }
 }

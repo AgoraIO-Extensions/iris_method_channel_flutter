@@ -1,7 +1,6 @@
 import 'dart:js' as js;
 
 import 'package:iris_method_channel/iris_method_channel.dart';
-import 'package:iris_method_channel/src/platform/web/iris_event_web.dart';
 
 import 'platform_tester_interface.dart';
 
@@ -113,17 +112,8 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
   }
 }
 
-class _FakeIrisEvent implements IrisEventWeb {
+class _FakeIrisEvent implements IrisEvent {
   _FakeIrisEvent();
-
-  @override
-  void dispose() {}
-
-  @override
-  void initialize() {}
-
-  @override
-  void setIrisEventMessageListener(IrisEventMessageListener? listener) {}
 }
 
 class FakeNativeBindingDelegateProvider extends PlatformBindingsProvider {

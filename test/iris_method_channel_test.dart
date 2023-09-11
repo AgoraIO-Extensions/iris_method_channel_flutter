@@ -118,7 +118,7 @@ void main() {
 
       final holder = subScopedObjects.values.elementAt(0) as EventHandlerHolder;
 
-      expect(holder.nativeEventHandlerIntPtr, 123456);
+      expect(holder.eventHandlerHandle!(), 123456);
 
       expect(holder.getEventHandlers().length, 1);
       expect(holder.getEventHandlers().elementAt(0), eventHandler);
@@ -129,8 +129,6 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test(
@@ -169,8 +167,6 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test(
@@ -199,8 +195,6 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test('disposed', () async {
@@ -329,8 +323,6 @@ void main() {
           .where((e) => e.methodCall.funcName == 'registerEventHandler');
       expect(registerEventHandlerCallRecord.length, 0);
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test('unregisterEventHandler after disposed', () async {
@@ -416,7 +408,7 @@ void main() {
 
       final holder = subScopedObjects.values.elementAt(0) as EventHandlerHolder;
 
-      expect(holder.nativeEventHandlerIntPtr, 123456);
+      expect(holder.eventHandlerHandle!(), 123456);
 
       expect(holder.getEventHandlers().length, 2);
       expect(holder.getEventHandlers().elementAt(0), eventHandler1);
@@ -428,8 +420,6 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test(
@@ -460,14 +450,14 @@ void main() {
       expect(subScopedObjects.keys.length, 2);
 
       final holder = subScopedObjects.values.elementAt(0) as EventHandlerHolder;
-      expect(holder.nativeEventHandlerIntPtr, 123456);
+      expect(holder.eventHandlerHandle!(), 123456);
 
       expect(holder.getEventHandlers().length, 1);
       expect(holder.getEventHandlers().elementAt(0), eventHandler1);
 
       final holder2 =
           subScopedObjects.values.elementAt(1) as EventHandlerHolder;
-      expect(holder2.nativeEventHandlerIntPtr, 123456);
+      expect(holder2.eventHandlerHandle!(), 123456);
 
       expect(holder2.getEventHandlers().length, 1);
       expect(holder2.getEventHandlers().elementAt(0), eventHandler2);
@@ -482,8 +472,6 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test(
@@ -523,7 +511,7 @@ void main() {
 
       final holder = subScopedObjects.values.elementAt(0) as EventHandlerHolder;
 
-      expect(holder.nativeEventHandlerIntPtr, 123456);
+      expect(holder.eventHandlerHandle!(), 123456);
 
       expect(holder.getEventHandlers().length, 1);
       expect(holder.getEventHandlers().elementAt(0), eventHandler1);
@@ -534,8 +522,6 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test(
@@ -575,7 +561,7 @@ void main() {
 
       final holder = subScopedObjects.values.elementAt(0) as EventHandlerHolder;
 
-      expect(holder.nativeEventHandlerIntPtr, 123456);
+      expect(holder.eventHandlerHandle!(), 123456);
 
       expect(holder.getEventHandlers().length, 1);
       expect(holder.getEventHandlers().elementAt(0), eventHandler1);
@@ -591,8 +577,6 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test(
@@ -642,8 +626,6 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test(
@@ -693,8 +675,6 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test(
@@ -743,8 +723,6 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test(
@@ -782,8 +760,6 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 
   test(
@@ -825,7 +801,5 @@ void main() {
 
       await irisMethodChannel.dispose();
     },
-    // On web, the `PlatformBindingsDelegateInterface`'s APIs not be called at all
-    skip: kIsWeb,
   );
 }

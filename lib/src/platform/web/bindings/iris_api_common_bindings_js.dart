@@ -10,10 +10,10 @@ import 'package:js/js.dart';
 // ignore_for_file: public_member_api_docs, non_constant_identifier_names
 
 // NOTE:
-// For compatibility to dart sdk >= 2.12, we only use the feature that are 
+// For compatibility to dart sdk >= 2.12, we only use the feature that are
 // supported in `js: 0.6.3` at this time
 
-@JS('AgoraWrapper.EventParam')
+@JS('IrisCore.EventParam')
 @anonymous
 class EventParam {
   // Must have an unnamed factory constructor with named arguments.
@@ -42,7 +42,7 @@ IrisEventMessage toIrisEventMessage(EventParam param) {
 
 typedef ApiParam = EventParam;
 
-@JS('AgoraWrapper.CallIrisApiResult')
+@JS('IrisCore.CallIrisApiResult')
 @anonymous
 class CallIrisApiResult {
   external factory CallIrisApiResult({
@@ -61,39 +61,26 @@ extension CallIrisApiResultExt on CallIrisApiResult {
   }
 }
 
-typedef IrisCEventHandler = void Function(EventParam param);
-
-@JS('AgoraWrapper.IrisEventHandlerHandle')
+@JS('IrisCore.IrisEventHandler')
 @anonymous
-class IrisEventHandlerHandle {}
+class IrisEventHandler {}
 
-@JS('AgoraWrapper.IrisApiEngine')
+@JS('IrisCore.IrisApiEngine')
 @anonymous
 class IrisApiEngine {}
 
-@JS('AgoraWrapper.CreateIrisApiEngine')
-external IrisApiEngine CreateIrisApiEngine();
+@JS('IrisCore.createIrisApiEngine')
+external IrisApiEngine createIrisApiEngine();
 
-@JS('AgoraWrapper.DestroyIrisApiEngine')
-external int DestroyIrisApiEngine(IrisApiEngine engine_ptr);
+@JS('IrisCore.disposeIrisApiEngine')
+external int disposeIrisApiEngine(IrisApiEngine engine_ptr);
 
-@JS('AgoraWrapper.CallIrisApi')
-external int CallIrisApi(IrisApiEngine engine_ptr, ApiParam apiParam);
+@JS('IrisCore.callIrisApi')
+external int callIrisApi(IrisApiEngine engine_ptr, ApiParam apiParam);
 
-@JS('AgoraWrapper.CallIrisApiAsync')
-external Future<CallIrisApiResult> CallIrisApiAsync(
-    IrisApiEngine engine_ptr, ApiParam apiParam);
+typedef IrisEventHandlerFuncJS = void Function(EventParam param);
+typedef IrisCEventHandler = IrisEventHandlerFuncJS;
 
-typedef IrisCEventHandlerDartCallback = void Function(EventParam param);
-
-@JS('AgoraWrapper.CreateIrisEventHandler')
-external IrisEventHandlerHandle CreateIrisEventHandler(
+@JS('IrisCore.createIrisEventHandler')
+external IrisEventHandler createIrisEventHandler(
     IrisCEventHandler event_handler);
-
-@JS('AgoraWrapper.SetIrisRtcEngineEventHandler')
-external IrisEventHandlerHandle SetIrisRtcEngineEventHandler(
-    IrisApiEngine engine_ptr, IrisEventHandlerHandle event_handler);
-
-@JS('AgoraWrapper.UnsetIrisRtcEngineEventHandler')
-external IrisEventHandlerHandle UnsetIrisRtcEngineEventHandler(
-    IrisApiEngine engine_ptr, IrisEventHandlerHandle event_handler);

@@ -148,7 +148,7 @@ class IrisMethodChannel {
               IrisMethodCall(eventKey.registerName, params)));
 
       final nativeEventHandlerIntPtr = result.data['observerIntPtr'];
-      holder.nativeEventHandlerIntPtr = nativeEventHandlerIntPtr;
+      holder.eventHandlerHandle = nativeEventHandlerIntPtr;
     } else {
       result = CallApiResult(irisReturnCode: 0, data: {'result': 0});
     }
@@ -176,13 +176,15 @@ class IrisMethodChannel {
     if (holder != null) {
       holder.removeEventHandler(scopedEvent.handler);
       if (holder.getEventHandlers().isEmpty) {
+        final eventHandlerHandle = holder.eventHandlerHandle;
+        assert(eventHandlerHandle != null);
         return _irisMethodChannelInternal
             .execute(DestroyNativeEventHandlerRequest(
           IrisMethodCall(
             scopedEvent.unregisterName,
             params,
             rawBufferParams: [
-              BufferParam(BufferParamHandle(holder.nativeEventHandlerIntPtr), 1)
+              BufferParam(BufferParamHandle(eventHandlerHandle!()), 1)
             ],
           ),
         ));
@@ -210,7 +212,7 @@ class IrisMethodChannel {
                     '',
                     rawBufferParams: [
                       BufferParam(
-                          BufferParamHandle(holder.nativeEventHandlerIntPtr), 1)
+                          BufferParamHandle(holder.eventHandlerHandle!()), 1)
                     ],
                   ))
               .toList();
