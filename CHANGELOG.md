@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.0-dev.2](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.0-dev.1...2.0.0-dev.2) (2023-09-11)
+
+
+### Bug Fixes
+
+* [android] Add namespace to work with android gradle 8.0 ([#82](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/82)) ([98ee75f](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/98ee75f31609ffd77b833a5636f3019b40c2bd39))
+* Align web implementation to native implementation ([#84](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/84)) ([27bb000](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/27bb000f2b1910484db77571a3728a870c3fe871))
+
 ## [2.0.0-dev.1](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/1.2.2...2.0.0-dev.1) (2023-09-04)
 
 
