@@ -160,7 +160,7 @@ class EventHandlerHolder
   final EventHandlerHolderKey key;
   final Set<EventLoopEventHandler> _eventHandlers = {};
 
-  int nativeEventHandlerIntPtr = 0;
+  IrisEventHandlerHandle? eventHandlerHandle;
 
   void addEventHandler(EventLoopEventHandler eventHandler) {
     _eventHandlers.add(eventHandler);

@@ -367,7 +367,7 @@ class _IrisMethodChannelNative {
       methodCall.params,
       rawBufferParams: [BufferParam(BufferParamHandle(eventHandlerIntPtr), 1)],
     ));
-    result.data['observerIntPtr'] = eventHandlerIntPtr;
+    result.data['observerIntPtr'] = IrisEventHandlerHandle(eventHandlerIntPtr);
     return result;
   }
 
