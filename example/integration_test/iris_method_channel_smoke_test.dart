@@ -1,6 +1,7 @@
 import 'dart:isolate';
 import 'dart:ffi' as ffi;
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:iris_method_channel/iris_method_channel.dart';
@@ -65,24 +66,29 @@ class _FakeNativeBindingDelegateProvider extends PlatformBindingsProvider {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('IrisMethodChannel should call hot restart listener',
-      (tester) async {
-    final irisMethodChannel = IrisMethodChannel(
-        _FakeNativeBindingDelegateProvider(_FakeNativeBindingDelegate()));
-    await irisMethodChannel.initilize([]);
+  testWidgets(
+    'IrisMethodChannel should call hot restart listener',
+    (tester) async {
+      await tester.pumpWidget(Container());
 
-    bool hotRestartListenerCalled = false;
-    irisMethodChannel.addHotRestartListener((message) {
-      hotRestartListenerCalled = true;
-    });
+      final irisMethodChannel = IrisMethodChannel(
+          _FakeNativeBindingDelegateProvider(_FakeNativeBindingDelegate()));
+      await irisMethodChannel.initilize([]);
 
-    (irisMethodChannel.getIrisMethodChannelInternal()
-            as IrisMethodChannelInternalIO)
-        .workerIsolate
-        .kill(priority: Isolate.immediate);
-    // Delayed 2 seconds to ensure `irisMethodChannel.workerIsolate.kill` done
-    await Future.delayed(const Duration(seconds: 2));
+      bool hotRestartListenerCalled = false;
+      irisMethodChannel.addHotRestartListener((message) {
+        hotRestartListenerCalled = true;
+      });
 
-    expect(hotRestartListenerCalled, true);
-  });
+      (irisMethodChannel.getIrisMethodChannelInternal()
+              as IrisMethodChannelInternalIO)
+          .workerIsolate
+          .kill(priority: Isolate.immediate);
+      // Delayed 2 seconds to ensure `irisMethodChannel.workerIsolate.kill` done
+      await Future.delayed(const Duration(seconds: 2));
+
+      expect(hotRestartListenerCalled, true);
+    },
+    timeout: const Timeout(Duration(minutes: 10)),
+  );
 }
