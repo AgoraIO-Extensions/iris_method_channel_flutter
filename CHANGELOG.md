@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.0-dev.3](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.0-dev.2...2.0.0-dev.3) (2023-09-13)
+
+
+### Bug Fixes
+
+* [native] Fix errors when hot restarted ([#86](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/86)) ([ab6260e](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/ab6260ee461aa7e4363a993794c0956116a0ad9c))
+
 ## [2.0.0-dev.2](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.0-dev.1...2.0.0-dev.2) (2023-09-11)
 
 
