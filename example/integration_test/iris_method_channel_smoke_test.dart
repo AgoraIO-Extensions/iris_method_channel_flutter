@@ -80,8 +80,8 @@ void main() {
             as IrisMethodChannelInternalIO)
         .workerIsolate
         .kill(priority: Isolate.immediate);
-    // Delayed 1 second to ensure `irisMethodChannel.workerIsolate.kill` done
-    await Future.delayed(const Duration(seconds: 1));
+    // Delayed 2 seconds to ensure `irisMethodChannel.workerIsolate.kill` done
+    await Future.delayed(const Duration(seconds: 2));
 
     expect(hotRestartListenerCalled, true);
   });
