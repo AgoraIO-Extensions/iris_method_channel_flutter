@@ -150,14 +150,16 @@ class _HotRestartFinalizer {
     nativeBindingDelegate.initialize();
 
     nativeBindingDelegate.destroyNativeApiEngine(IrisApiEngineHandle(
-        ffi.Pointer.fromAddress(_debugIrisApiEngineNativeHandle!)));
+        ffi.Pointer<ffi.Void>.fromAddress(_debugIrisApiEngineNativeHandle!)));
 
-    calloc.free(ffi.Pointer.fromAddress(_debugIrisCEventHandlerNativeHandle!));
+    calloc.free(ffi.Pointer<ffi.Void>.fromAddress(
+        _debugIrisCEventHandlerNativeHandle!));
     nativeBindingDelegate.destroyIrisEventHandler(IrisEventHandlerHandle(
-        ffi.Pointer.fromAddress(_debugIrisEventHandlerNativeHandle!)));
+        ffi.Pointer<ffi.Void>.fromAddress(
+            _debugIrisEventHandlerNativeHandle!)));
 
-    assert(provider.provideIrisEvent() != null);
-    final irisEvent = provider.provideIrisEvent()! as IrisEventIO;
+    final irisEvent =
+        (provider.provideIrisEvent() ?? IrisEventIO()) as IrisEventIO;
     irisEvent.dispose();
 
     _onExitSubscription?.cancel();
