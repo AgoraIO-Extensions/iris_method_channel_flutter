@@ -229,9 +229,14 @@ jobs:
           flutter-version: '3.10.0' # Run the latest version
           cache: true
       - name: windows integration test
+        shell: bash
         run: |
           flutter packages get
-          flutter test integration_test -d windows
+
+          # It's a little tricky that you should run integration test one by one on flutter macOS/Windows
+          for filename in integration_test/*.dart; do
+              flutter test $filename -d windows
+          done
         working-directory: example
     
   integration_test_ios:
@@ -274,7 +279,11 @@ jobs:
       - name: run macos integration test
         run: |
           flutter packages get
-          flutter test integration_test/iris_event_smoke_test.dart -d macos
+          
+          # It's a little tricky that you should run integration test one by one on flutter macOS/Windows
+          for filename in integration_test/*.dart; do
+              flutter test $filename -d macos
+          done
         working-directory: example
     
   integration_test_android:
