@@ -256,7 +256,7 @@ jobs:
       - name: ios integration test
         run: |
           flutter packages get
-          flutter test integration_test
+          flutter test integration_test --verbose
         working-directory: example
 
   integration_test_ios_use_frameworks:
@@ -278,7 +278,7 @@ jobs:
           export USE_FRAMEWORKS=true
 
           flutter packages get
-          flutter test integration_test
+          flutter test integration_test --verbose
         working-directory: example
     
   integration_test_macos:
