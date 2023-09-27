@@ -261,6 +261,8 @@ jobs:
           flutter test integration_test
 
           unset USE_FRAMEWORKS
+          flutter clean
+          flutter packages get
           flutter test integration_test
         working-directory: example
     
