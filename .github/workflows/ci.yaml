@@ -256,12 +256,27 @@ jobs:
       - name: ios integration test
         run: |
           flutter packages get
-
-          export USE_FRAMEWORKS=true
           flutter test integration_test
+        working-directory: example
 
-          unset USE_FRAMEWORKS
-          flutter clean
+  integration_test_ios_use_frameworks:
+    name: ios integration test with use_frameworks
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    runs-on: macos-13
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v1
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.10.0' # Run the latest version
+          cache: true
+      - uses: futureware-tech/simulator-action@v2
+        with:
+          model: 'iPhone 14 Pro Max'
+      - name: ios integration test
+        run: |
+          export USE_FRAMEWORKS=true
+
           flutter packages get
           flutter test integration_test
         working-directory: example
