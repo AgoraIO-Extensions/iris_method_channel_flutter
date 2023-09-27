@@ -256,7 +256,7 @@ jobs:
       - name: ios integration test
         run: |
           flutter packages get
-          flutter test integration_test/iris_event_smoke_test.dart --verbose
+          flutter test integration_test/iris_event_smoke_test.dart -d "iPhone 14 Pro Max" --verbose
         working-directory: example
 
   integration_test_ios_use_frameworks:
