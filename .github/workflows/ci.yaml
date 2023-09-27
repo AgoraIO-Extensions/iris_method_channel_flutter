@@ -280,7 +280,8 @@ jobs:
           export USE_FRAMEWORKS=true
 
           flutter packages get
-          flutter test integration_test -d "iPhone 14 Pro Max" --verbose
+          flutter test integration_test/iris_event_smoke_test.dart -d "iPhone 14 Pro Max" --verbose
+          flutter test integration_test/iris_method_channel_smoke_test.dart -d "iPhone 14 Pro Max" --verbose
         working-directory: example
     
   integration_test_macos:
