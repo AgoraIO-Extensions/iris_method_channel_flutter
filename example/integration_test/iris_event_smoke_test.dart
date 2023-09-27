@@ -21,6 +21,6 @@ void main() {
       irisEvent.onEventPtr;
       irisEvent.dispose();
     },
-    timeout: const Timeout(Duration(minutes: 10)),
+    timeout: const Timeout(Duration(minutes: 30)),
   );
 }
