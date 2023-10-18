@@ -32,8 +32,9 @@ target 'Runner' do
   # test the `use_frameworks!` and not use `use_frameworks!` case
   if ENV['USE_FRAMEWORKS'] == "true"
     use_frameworks!
-    use_modular_headers!
   end
+
+  use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
