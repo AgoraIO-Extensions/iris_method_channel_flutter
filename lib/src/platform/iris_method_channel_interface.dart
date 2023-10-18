@@ -100,8 +100,6 @@ abstract class InitilizationArgProvider {
   IrisHandle provide(IrisApiEngineHandle apiEngineHandle);
 }
 
-// typedef InitilizationArgProvider = Object Function(Object apiEngineHandle);
-
 abstract class IrisMethodChannelInternal {
   Future<InitilizationResult?> initilize(List<InitilizationArgProvider> args);
 
