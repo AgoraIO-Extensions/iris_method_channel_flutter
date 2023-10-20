@@ -90,8 +90,21 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
 
   @override
   CreateApiEngineResult createApiEngine(List<InitilizationArgProvider> args) {
+    final engineHandle =
+        IrisApiEngineHandle(ffi.Pointer<ffi.Void>.fromAddress(100));
+    if (args.isNotEmpty) {
+      final value = args[0].provide(engineHandle)();
+      final record = CallApiRecord(
+        const IrisMethodCall('createApiEngine', '{}'),
+        CallApiRecordApiParam(
+          'createApiEngine',
+          jsonEncode({'args': value}),
+        ),
+      );
+      apiCallPortSendPort.send(record);
+    }
     return CreateApiEngineResult(
-      IrisApiEngineHandle(ffi.Pointer<ffi.Void>.fromAddress(100)),
+      engineHandle,
       extraData: <String, Object>{'extra_handle': 1000},
     );
   }

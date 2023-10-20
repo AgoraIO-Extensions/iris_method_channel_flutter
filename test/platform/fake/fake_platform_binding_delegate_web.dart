@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:js' as js;
 
 import 'package:iris_method_channel/iris_method_channel.dart';
@@ -52,8 +53,20 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
 
   @override
   CreateApiEngineResult createApiEngine(List<InitilizationArgProvider> args) {
+    final engineHandle = IrisApiEngineHandle(FakeTypeWeb());
+    if (args.isNotEmpty) {
+      final value = args[0].provide(engineHandle)();
+      final record = CallApiRecord(
+        const IrisMethodCall('createApiEngine', '{}'),
+        CallApiRecordApiParam(
+          'createApiEngine',
+          jsonEncode({'args': value}),
+        ),
+      );
+      messenger.addCallApiRecord(record);
+    }
     return CreateApiEngineResult(
-      IrisApiEngineHandle(FakeTypeWeb()),
+      engineHandle,
       extraData: <String, Object>{'extra_handle': 1000},
     );
   }
