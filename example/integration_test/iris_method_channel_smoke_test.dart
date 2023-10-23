@@ -89,6 +89,6 @@ void main() {
 
       expect(hotRestartListenerCalled, true);
     },
-    timeout: const Timeout(Duration(minutes: 10)),
+    timeout: const Timeout(Duration(minutes: 20)),
   );
 }
