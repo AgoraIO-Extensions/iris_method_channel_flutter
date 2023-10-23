@@ -27,7 +27,7 @@ class _FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
   }
 
   @override
-  CreateApiEngineResult createApiEngine(List<Object> args) {
+  CreateApiEngineResult createApiEngine(List<InitilizationArgProvider> args) {
     return CreateApiEngineResult(
       IrisApiEngineHandle(ffi.Pointer<ffi.Void>.fromAddress(100)),
       extraData: <String, Object>{'extra_handle': 1000},

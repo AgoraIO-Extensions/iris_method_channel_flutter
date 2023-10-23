@@ -18,54 +18,6 @@ class _TestInitilizationArgProvider extends InitilizationArgProvider {
   }
 }
 
-class _TestInitilizationArgProviderPlatformBindingsDelegate
-    extends PlatformBindingsDelegateInterface {
-  @override
-  int callApi(IrisMethodCall methodCall, IrisApiEngineHandle apiEnginePtr,
-      IrisApiParamHandle param) {
-    return 0;
-  }
-
-  @override
-  Future<CallApiResult> callApiAsync(IrisMethodCall methodCall,
-      IrisApiEngineHandle apiEnginePtr, IrisApiParamHandle param) async {
-    return CallApiResult(irisReturnCode: 0, data: {});
-  }
-
-  @override
-  CreateApiEngineResult createApiEngine(List<InitilizationArgProvider> args) {
-    // Trigger the `provide` in test
-    args[0].provide(const IrisApiEngineHandle(0));
-    return const CreateApiEngineResult(
-      IrisApiEngineHandle(0),
-      extraData: <String, Object>{'extra_handle': 1000},
-    );
-  }
-
-  @override
-  IrisEventHandlerHandle createIrisEventHandler(
-      IrisCEventHandlerHandle eventHandler) {
-    return const IrisEventHandlerHandle(0);
-  }
-
-  @override
-  void destroyIrisEventHandler(IrisEventHandlerHandle handler) {}
-
-  @override
-  void destroyNativeApiEngine(IrisApiEngineHandle apiEnginePtr) {}
-
-  @override
-  void initialize() {}
-}
-
-class _TestInitilizationArgProviderDelegateProvider
-    extends PlatformBindingsProvider {
-  @override
-  PlatformBindingsDelegateInterface provideNativeBindingDelegate() {
-    return _TestInitilizationArgProviderPlatformBindingsDelegate();
-  }
-}
-
 class _TestEventLoopEventHandler extends EventLoopEventHandler {
   @override
   bool handleEventInternal(
