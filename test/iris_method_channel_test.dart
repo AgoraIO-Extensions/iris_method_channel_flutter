@@ -823,7 +823,7 @@ void main() {
           .toList();
       final resData = registerEventHandlerCallRecord[0].apiParam.data;
 
-      expect(jsonDecode(resData)['args'], true);
+      expect(Map.from(jsonDecode(resData))['args'], true);
 
       await irisMethodChannel.dispose();
     },
