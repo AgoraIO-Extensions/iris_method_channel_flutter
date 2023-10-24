@@ -14,8 +14,9 @@ abstract class IrisHandle {
 
 /// [IrisHandle] implementation that hold a value of [Object] type. And return the
 /// value when the callable function is called.
-class _ObjectIrisHandle extends IrisHandle {
-  const _ObjectIrisHandle(this._h);
+class ObjectIrisHandle extends IrisHandle {
+  /// Construct the [ObjectIrisHandle]
+  const ObjectIrisHandle(this._h);
 
   final Object _h;
 
@@ -26,31 +27,31 @@ class _ObjectIrisHandle extends IrisHandle {
 }
 
 /// The [IrisHandle] of the iris's `IrisApiEngine`
-class IrisApiEngineHandle extends _ObjectIrisHandle {
+class IrisApiEngineHandle extends ObjectIrisHandle {
   /// Construct the [IrisApiEngineHandle]
   const IrisApiEngineHandle(Object h) : super(h);
 }
 
 /// The [IrisHandle] of the iris's `ApiParam`
-class IrisApiParamHandle extends _ObjectIrisHandle {
+class IrisApiParamHandle extends ObjectIrisHandle {
   /// Construct the [IrisApiParamHandle]
   const IrisApiParamHandle(Object h) : super(h);
 }
 
 /// The [IrisHandle] of the iris's `IrisCEventHandler`
-class IrisCEventHandlerHandle extends _ObjectIrisHandle {
+class IrisCEventHandlerHandle extends ObjectIrisHandle {
   /// Construct the [IrisCEventHandlerHandle]
   const IrisCEventHandlerHandle(Object h) : super(h);
 }
 
 /// The [IrisHandle] of the iris's `IrisEventHandler`
-class IrisEventHandlerHandle extends _ObjectIrisHandle {
+class IrisEventHandlerHandle extends ObjectIrisHandle {
   /// Construct the [IrisEventHandlerHandle]
   const IrisEventHandlerHandle(Object h) : super(h);
 }
 
 /// The [IrisHandle] of the `BufferParam`
-class BufferParamHandle extends _ObjectIrisHandle {
+class BufferParamHandle extends ObjectIrisHandle {
   /// Construct the [BufferParamHandle]
   const BufferParamHandle(Object h) : super(h);
 }

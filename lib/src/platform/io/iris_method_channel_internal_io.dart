@@ -66,7 +66,7 @@ class _InitilizationArgs {
   final SendPort eventPortSendPort;
   final SendPort? onExitSendPort;
   final PlatformBindingsProvider provider;
-  final List<int> argNativeHandles;
+  final List<InitilizationArgProvider> argNativeHandles;
 }
 
 class InitilizationResultIO implements InitilizationResult {
@@ -316,7 +316,7 @@ class _IrisMethodChannelNative {
   }
 
   CreateApiEngineResult initilize(
-      SendPort sendPort, List<ffi.Pointer<ffi.Void>> args) {
+      SendPort sendPort, List<InitilizationArgProvider> args) {
     _irisEvent.initialize();
     _irisEvent.registerEventHandler(sendPort);
 
@@ -412,10 +412,6 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
     final SendPort? onExitSendPort = args.onExitSendPort;
     final PlatformBindingsProvider provider = args.provider;
 
-    final List<ffi.Pointer<ffi.Void>> argsInner = args.argNativeHandles
-        .map<ffi.Pointer<ffi.Void>>((e) => ffi.Pointer.fromAddress(e))
-        .toList();
-
     final apiCallPort = ReceivePort();
 
     final nativeBindingDelegate = provider.provideNativeBindingDelegate();
@@ -428,7 +424,7 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
     final _IrisMethodChannelNative executor = _IrisMethodChannelNative(
         nativeBindingDelegate, irisEvent as IrisEventIO);
     final CreateApiEngineResult executorInitilizationResult =
-        executor.initilize(mainEventSendPort, argsInner);
+        executor.initilize(mainEventSendPort, args.argNativeHandles);
 
     int? debugIrisCEventHandlerNativeHandle;
     int? debugIrisEventHandlerNativeHandle;
@@ -503,7 +499,8 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
   }
 
   @override
-  Future<InitilizationResult?> initilize(List<int> args) async {
+  Future<InitilizationResult?> initilize(
+      List<InitilizationArgProvider> args) async {
     if (_initilized) {
       return null;
     }

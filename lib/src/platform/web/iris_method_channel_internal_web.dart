@@ -100,7 +100,8 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
   }
 
   @override
-  Future<InitilizationResult?> initilize(List<int> args) async {
+  Future<InitilizationResult?> initilize(
+      List<InitilizationArgProvider> args) async {
     _platformBindingsDelegate =
         _nativeBindingsProvider.provideNativeBindingDelegate();
     final createApiEngineResult =

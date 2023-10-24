@@ -37,7 +37,8 @@ class IrisMethodChannel {
     });
   }
 
-  Future<InitilizationResult?> initilize(List<int> args) async {
+  Future<InitilizationResult?> initilize(
+      List<InitilizationArgProvider> args) async {
     if (_initilized) {
       return null;
     }

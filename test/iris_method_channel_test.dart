@@ -9,6 +9,15 @@ import 'package:iris_method_channel/iris_method_channel.dart';
 import 'platform/platform_cases.dart';
 import 'platform/platform_tester.dart';
 
+class _TestInitilizationArgProvider extends InitilizationArgProvider {
+  bool called = false;
+  @override
+  IrisHandle provide(IrisApiEngineHandle apiEngineHandle) {
+    called = true;
+    return ObjectIrisHandle(called);
+  }
+}
+
 class _TestEventLoopEventHandler extends EventLoopEventHandler {
   @override
   bool handleEventInternal(
@@ -798,6 +807,23 @@ void main() {
       final registerEventHandlerCallRecord1 = messenger.callApiRecords
           .where((e) => e.methodCall.funcName == 'unregisterEventHandler1');
       expect(registerEventHandlerCallRecord1.length, 1);
+
+      await irisMethodChannel.dispose();
+    },
+  );
+
+  test(
+    'Can pass InitilizationArgProvider',
+    () async {
+      final argProvider = _TestInitilizationArgProvider();
+      await irisMethodChannel.initilize([argProvider]);
+
+      final registerEventHandlerCallRecord = messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'createApiEngine')
+          .toList();
+      final resData = registerEventHandlerCallRecord[0].apiParam.data;
+
+      expect(Map.from(jsonDecode(resData))['args'], true);
 
       await irisMethodChannel.dispose();
     },

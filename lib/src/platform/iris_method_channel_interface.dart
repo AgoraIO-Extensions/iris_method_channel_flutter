@@ -96,8 +96,12 @@ class DestroyNativeEventHandlerListRequest extends IrisMethodCallListRequest {
 /// * You should not do some asynchronous jobs inside this listener.
 typedef HotRestartListener = void Function(Object? message);
 
+abstract class InitilizationArgProvider {
+  IrisHandle provide(IrisApiEngineHandle apiEngineHandle);
+}
+
 abstract class IrisMethodChannelInternal {
-  Future<InitilizationResult?> initilize(List<int> args);
+  Future<InitilizationResult?> initilize(List<InitilizationArgProvider> args);
 
   // Future<CallApiResult> invokeMethod(IrisMethodCall methodCall);
 

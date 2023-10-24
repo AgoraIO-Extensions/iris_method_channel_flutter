@@ -16,7 +16,7 @@ class CreateApiEngineResult {
 abstract class PlatformBindingsDelegateInterface {
   void initialize();
 
-  CreateApiEngineResult createApiEngine(List<Object> args);
+  CreateApiEngineResult createApiEngine(List<InitilizationArgProvider> args);
 
   int callApi(
     IrisMethodCall methodCall,
