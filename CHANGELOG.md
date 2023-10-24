@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.0-dev.4](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.0-dev.3...2.0.0-dev.4) (2023-10-24)
+
+
+### Features
+
+* Introduce the InitilizationArgProvider to allow the creation of the initialization arg lazily ([#90](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/90)) ([b0f6be2](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/b0f6be203675bdfe89c86c0eb55c20b50519c3b1))
+
 ## [2.0.0-dev.3](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.0-dev.2...2.0.0-dev.3) (2023-09-13)
 
 
