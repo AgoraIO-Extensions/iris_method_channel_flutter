@@ -1,5 +1,7 @@
 # Changelog
 
+## [2.0.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.0-dev.4...2.0.0) (2023-12-05)
+
 ## [2.0.0-dev.4](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.0-dev.3...2.0.0-dev.4) (2023-10-24)
 
 
