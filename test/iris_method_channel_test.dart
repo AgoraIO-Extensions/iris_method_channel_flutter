@@ -209,8 +209,6 @@ void main() {
   test('disposed', () async {
     await irisMethodChannel.initilize([]);
     await irisMethodChannel.dispose();
-    // Wait for `dispose` completed.
-    await Future.delayed(const Duration(milliseconds: 500));
     final callRecord1 = messenger.callApiRecords
         .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
     expect(callRecord1.length, 1);
@@ -227,8 +225,6 @@ void main() {
     await irisMethodChannel.initilize([]);
     await irisMethodChannel.dispose();
     await irisMethodChannel.dispose();
-    // Wait for `dispose` completed.
-    await Future.delayed(const Duration(milliseconds: 500));
     final callRecord1 = messenger.callApiRecords
         .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
     expect(callRecord1.length, 1);
