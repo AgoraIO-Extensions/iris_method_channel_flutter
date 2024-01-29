@@ -10,6 +10,7 @@ set(LIBRARY_VERSION "0.1.0")
 project(${LIBRARY_NAME} VERSION ${LIBRARY_VERSION})
 
 set(SOURCES 
+    "${CMAKE_CURRENT_SOURCE_DIR}/collect_stack.cc"
      "${CMAKE_CURRENT_SOURCE_DIR}/iris_event.h"
      "${CMAKE_CURRENT_SOURCE_DIR}/iris_event.cc"
      "${CMAKE_CURRENT_SOURCE_DIR}/iris_life_cycle_observer.h"

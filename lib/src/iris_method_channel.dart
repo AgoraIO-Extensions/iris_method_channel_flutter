@@ -1,10 +1,16 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter/foundation.dart'
     show VoidCallback, debugPrint, visibleForTesting;
 import 'package:flutter/services.dart' show MethodChannel;
 import 'package:iris_method_channel/iris_method_channel.dart';
+import 'package:iris_method_channel/src/platform/io/bindings/native_iris_event_bindings.dart';
 import 'package:iris_method_channel/src/platform/iris_method_channel_internal.dart';
+
+import 'dart:ffi' as ffi;
+import 'package:ffi/ffi.dart';
 
 // ignore_for_file: public_member_api_docs
 
@@ -249,4 +255,47 @@ class IrisMethodChannel {
   IrisMethodChannelInternal getIrisMethodChannelInternal() {
     return _irisMethodChannelInternal;
   }
+}
+
+void collectStack() {
+  ffi.DynamicLibrary _loadLib() {
+    const _libName = 'iris_method_channel';
+    if (Platform.isWindows) {
+      return ffi.DynamicLibrary.open('$_libName.dll');
+    }
+
+    if (Platform.isAndroid) {
+      return ffi.DynamicLibrary.open('lib$_libName.so');
+    }
+
+    return ffi.DynamicLibrary.process();
+  }
+
+  final binding = NativeIrisEventBinding(_loadLib());
+  // final collect_stack
+
+  binding.SetCurrentThreadAsTarget();
+
+  Isolate.run(() async {
+    try {
+      while (true) {
+        await Future.delayed(const Duration(seconds: 1));
+        final collect_stack = NativeIrisEventBinding(_loadLib());
+        final stack = collect_stack.captureStackOfTargetThread();
+
+        for (var frame in stack.frames) {
+          if (frame.module != null) {
+            final module = frame.module!;
+            print(
+                "Frame(pc: ${frame.pc}, module: Module(path: ${module.path}, baseAddress: ${module.baseAddress}))");
+          } else {
+            print("Frame(pc: ${frame.pc})");
+          }
+        }
+        print("");
+      }
+    } catch (e, st) {
+      print('$e\n$st');
+    }
+  });
 }

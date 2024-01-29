@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' as ffi;
+import 'dart:io';
 import 'dart:isolate';
 
 import 'package:async/async.dart';
@@ -10,7 +11,10 @@ import 'package:flutter/foundation.dart'
 import 'package:iris_method_channel/iris_method_channel.dart';
 import 'package:iris_method_channel/src/platform/io/bindings/native_iris_api_common_bindings.dart'
     as iris;
+import 'package:iris_method_channel/src/platform/io/bindings/native_iris_event_bindings.dart';
 import 'package:iris_method_channel/src/platform/io/iris_event_io.dart';
+
+// import '../../collect_stack.dart' as collect_stack;
 
 // ignore_for_file: public_member_api_docs
 
@@ -407,6 +411,8 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
   late _HotRestartFinalizer _hotRestartFinalizer;
 
   static Future<void> _execute(_InitilizationArgs args) async {
+    collectStack();
+    
     final SendPort mainApiCallSendPort = args.apiCallPortSendPort;
     final SendPort mainEventSendPort = args.eventPortSendPort;
     final SendPort? onExitSendPort = args.onExitSendPort;
