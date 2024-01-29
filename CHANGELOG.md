@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.0...2.0.1) (2024-01-29)
+
+
+### Bug Fixes
+
+* Wait for the executor.dispose done before exit the isolate ([#93](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/93)) ([dc202d9](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/dc202d9e537c6cfdc702346f27c09fc2db77c53a))
+
 ## [2.0.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.0-dev.4...2.0.0) (2023-12-05)
 
 ## [2.0.0-dev.4](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.0-dev.3...2.0.0-dev.4) (2023-10-24)
