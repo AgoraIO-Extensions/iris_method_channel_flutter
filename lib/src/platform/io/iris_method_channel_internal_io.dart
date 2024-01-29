@@ -49,7 +49,9 @@ class _Messenger implements DisposableObject {
     }
     _isDisposed = true;
     requestPort.send(null);
-    await responseQueue.cancel();
+    // Wait for `executor.dispose` done in isolate.
+    await responseQueue.next;
+    responseQueue.cancel();
   }
 }
 
@@ -450,8 +452,9 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
     // Wait for messages from the main isolate.
     await for (final request in apiCallPort) {
       if (request == null) {
-        // Exit if the main isolate sends a null message, indicating there are no
-        // more files to read and parse.
+        executor.dispose();
+        mainApiCallSendPort.send(null);
+        // Ready exit the isolate.
         break;
       }
 
@@ -494,7 +497,6 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
       }
     }
 
-    executor.dispose();
     Isolate.exit(onExitSendPort, 0);
   }
 
