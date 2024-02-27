@@ -2,6 +2,7 @@
 library iris_web;
 
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:iris_method_channel/src/platform/iris_event_interface.dart';
 import 'package:iris_method_channel/src/platform/iris_method_channel_interface.dart';
@@ -37,7 +38,8 @@ class EventParam {
 }
 
 IrisEventMessage toIrisEventMessage(EventParam param) {
-  return IrisEventMessage(param.event, param.data, []);
+  return IrisEventMessage(
+      param.event, param.data, List<Uint8List>.from(param.buffer));
 }
 
 typedef ApiParam = EventParam;
