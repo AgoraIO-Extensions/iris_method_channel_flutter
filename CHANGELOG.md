@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.1...2.1.0) (2024-03-05)
+
+
+### Features
+
+* [web] support pass buffer data ([#95](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/95)) ([391e3f3](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/391e3f3083c84eae8a6f420ef4206dc3e50942ca))
+
 ## [2.0.1](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.0...2.0.1) (2024-01-29)
 
 
