@@ -22,6 +22,7 @@ class _FakeNativeBindingDelegateMessenger implements CallApiRecorderInterface {
 }
 
 class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
+  // ignore: library_private_types_in_public_api
   FakeNativeBindingDelegate(this.messenger);
 
   // ignore: library_private_types_in_public_api
