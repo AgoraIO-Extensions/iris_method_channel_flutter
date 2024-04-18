@@ -71,6 +71,36 @@ void main() {
     await irisMethodChannel.dispose();
   });
 
+  test('only initialize once', () async {
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.initilize([]);
+
+    final callRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'createApiEngine');
+    expect(callRecord1.length, 1);
+
+    await irisMethodChannel.dispose();
+  });
+
+  test('can re-initialize after dispose', () async {
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.dispose();
+    final callRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'createApiEngine');
+    expect(callRecord1.length, 1);
+
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.initilize([]);
+    final callRecord2 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'createApiEngine');
+    expect(callRecord2.length, 2);
+    await irisMethodChannel.dispose();
+  });
+
   test('invokeMethod', () async {
     await irisMethodChannel.initilize([]);
     final callApiResult = await irisMethodChannel

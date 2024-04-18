@@ -8,6 +8,23 @@ import 'package:iris_method_channel/src/platform/iris_method_channel_internal.da
 
 // ignore_for_file: public_member_api_docs
 
+class CallOnce {
+  Completer<void> _completer = Completer<void>();
+
+  Future<void> callOnce(Future<void> Function() func) async {
+    if (!_completer.isCompleted) {
+      try {
+        await func();
+      } catch (e) {
+        _completer = Completer<void>();
+        rethrow;
+      }
+      _completer.complete();
+    }
+    return _completer.future;
+  }
+}
+
 class IrisMethodChannel {
   IrisMethodChannel(this._nativeBindingsProvider) {
     _irisMethodChannelInternal =
@@ -23,6 +40,8 @@ class IrisMethodChannel {
   bool _initilized = false;
   @visibleForTesting
   final ScopedObjects scopedEventHandlers = ScopedObjects();
+
+  CallOnce? _initializeCallOnce;
 
   void _setuponDetachedFromEngineListener() {
     _channel.setMethodCallHandler((call) async {
@@ -43,40 +62,43 @@ class IrisMethodChannel {
       return null;
     }
 
-    _setuponDetachedFromEngineListener();
+    InitilizationResult? initilizationResult;
+    _initializeCallOnce ??= CallOnce();
+    await _initializeCallOnce!.callOnce(() async {
+      _setuponDetachedFromEngineListener();
 
-    final initilizationResult =
-        await _irisMethodChannelInternal.initilize(args);
+      initilizationResult = await _irisMethodChannelInternal.initilize(args);
 
-    _irisMethodChannelInternal.setIrisEventMessageListener((eventMessage) {
-      bool handled = false;
-      for (final sub in scopedEventHandlers.values) {
-        final scopedObjects = sub as DisposableScopedObjects;
-        for (final es in scopedObjects.values) {
-          final EventHandlerHolder eh = es as EventHandlerHolder;
-          // We need the event handlers with the same _EventHandlerHolderKey consume the message.
-          for (final e in eh.getEventHandlers()) {
-            if (e.handleEvent(
-                eventMessage.event, eventMessage.data, eventMessage.buffers)) {
-              handled = true;
+      _irisMethodChannelInternal.setIrisEventMessageListener((eventMessage) {
+        bool handled = false;
+        for (final sub in scopedEventHandlers.values) {
+          final scopedObjects = sub as DisposableScopedObjects;
+          for (final es in scopedObjects.values) {
+            final EventHandlerHolder eh = es as EventHandlerHolder;
+            // We need the event handlers with the same _EventHandlerHolderKey consume the message.
+            for (final e in eh.getEventHandlers()) {
+              if (e.handleEvent(eventMessage.event, eventMessage.data,
+                  eventMessage.buffers)) {
+                handled = true;
+              }
+            }
+
+            // Break the loop after the event handlers in the same EventHandlerHolder
+            // consume the message.
+            if (handled) {
+              break;
             }
           }
 
-          // Break the loop after the event handlers in the same EventHandlerHolder
-          // consume the message.
+          // Break the loop if there is an EventHandlerHolder consume the message.
           if (handled) {
             break;
           }
         }
+      });
 
-        // Break the loop if there is an EventHandlerHolder consume the message.
-        if (handled) {
-          break;
-        }
-      }
+      _initilized = true;
     });
-
-    _initilized = true;
 
     return initilizationResult;
   }
@@ -117,6 +139,7 @@ class IrisMethodChannel {
     _initilized = false;
 
     await _irisMethodChannelInternal.dispose();
+    _initializeCallOnce = null;
   }
 
   Future<CallApiResult> registerEventHandler(
