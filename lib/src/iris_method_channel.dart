@@ -10,16 +10,20 @@ import 'package:iris_method_channel/src/platform/iris_method_channel_internal.da
 
 class CallOnce {
   Completer<void> _completer = Completer<void>();
+  bool _isRunning = false;
 
   Future<void> callOnce(Future<void> Function() func) async {
-    if (!_completer.isCompleted) {
+    if (!_completer.isCompleted && !_isRunning) {
       try {
+        _isRunning = true;
         await func();
       } catch (e) {
         _completer = Completer<void>();
+        _isRunning = false;
         rethrow;
       }
       _completer.complete();
+      _isRunning = false;
     }
     return _completer.future;
   }

@@ -83,6 +83,19 @@ void main() {
     await irisMethodChannel.dispose();
   });
 
+  test('only initialize once when called simultaneously', () async {
+    for (int i = 0; i < 5; ++i) {
+      irisMethodChannel.initilize([]);
+    }
+    // Wait for the 5 times calls of `irisMethodChannel.initilize` are completed.
+    await Future.delayed(const Duration(milliseconds: 1000));
+    final callRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'createApiEngine');
+    expect(callRecord1.length, 1);
+
+    await irisMethodChannel.dispose();
+  });
+
   test('can re-initialize after dispose', () async {
     await irisMethodChannel.initilize([]);
     await irisMethodChannel.initilize([]);
