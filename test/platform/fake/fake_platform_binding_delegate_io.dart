@@ -245,6 +245,7 @@ class PlatformTesterInterfaceIO implements PlatformTesterInterface {
     irisMethodChannel = IrisMethodChannel(nativeBindingsProvider);
   }
 
+  // ignore: library_private_types_in_public_api
   late _FakeNativeBindingDelegateMessenger messenger;
   late IrisMethodChannel irisMethodChannel;
 
