@@ -408,7 +408,7 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
   late Isolate workerIsolate;
   late _HotRestartFinalizer _hotRestartFinalizer;
 
-  CallOnce? _initializeCallOnce;
+  AsyncMemoizer? _initializeCallOnce;
 
   static Future<void> _execute(_InitilizationArgs args) async {
     final SendPort mainApiCallSendPort = args.apiCallPortSendPort;
@@ -510,8 +510,8 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
     }
 
     late InitilizationResultIO initilizationResult;
-    _initializeCallOnce ??= CallOnce();
-    await _initializeCallOnce!.callOnce(() async {
+    _initializeCallOnce ??= AsyncMemoizer();
+    await _initializeCallOnce!.runOnce(() async {
       final apiCallPort = ReceivePort();
       final eventPort = ReceivePort();
 

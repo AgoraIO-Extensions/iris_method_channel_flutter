@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:async/async.dart' show AsyncMemoizer;
 import 'package:flutter/foundation.dart'
     show VoidCallback, debugPrint, visibleForTesting;
 import 'package:flutter/services.dart' show MethodChannel;
@@ -7,27 +8,6 @@ import 'package:iris_method_channel/iris_method_channel.dart';
 import 'package:iris_method_channel/src/platform/iris_method_channel_internal.dart';
 
 // ignore_for_file: public_member_api_docs
-
-class CallOnce {
-  Completer<void> _completer = Completer<void>();
-  bool _isRunning = false;
-
-  Future<void> callOnce(Future<void> Function() func) async {
-    if (!_completer.isCompleted && !_isRunning) {
-      try {
-        _isRunning = true;
-        await func();
-      } catch (e) {
-        _completer = Completer<void>();
-        _isRunning = false;
-        rethrow;
-      }
-      _completer.complete();
-      _isRunning = false;
-    }
-    return _completer.future;
-  }
-}
 
 class IrisMethodChannel {
   IrisMethodChannel(this._nativeBindingsProvider) {
@@ -45,7 +25,7 @@ class IrisMethodChannel {
   @visibleForTesting
   final ScopedObjects scopedEventHandlers = ScopedObjects();
 
-  CallOnce? _initializeCallOnce;
+  AsyncMemoizer? _initializeCallOnce;
 
   void _setuponDetachedFromEngineListener() {
     _channel.setMethodCallHandler((call) async {
@@ -67,8 +47,8 @@ class IrisMethodChannel {
     }
 
     InitilizationResult? initilizationResult;
-    _initializeCallOnce ??= CallOnce();
-    await _initializeCallOnce!.callOnce(() async {
+    _initializeCallOnce ??= AsyncMemoizer();
+    await _initializeCallOnce!.runOnce(() async {
       _setuponDetachedFromEngineListener();
 
       initilizationResult = await _irisMethodChannelInternal.initilize(args);
