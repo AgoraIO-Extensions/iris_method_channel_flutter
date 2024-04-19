@@ -102,6 +102,15 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
         ),
       );
       apiCallPortSendPort.send(record);
+    } else {
+      final record = CallApiRecord(
+        const IrisMethodCall('createApiEngine', '{}'),
+        CallApiRecordApiParam(
+          'createApiEngine',
+          '{}',
+        ),
+      );
+      apiCallPortSendPort.send(record);
     }
     return CreateApiEngineResult(
       engineHandle,

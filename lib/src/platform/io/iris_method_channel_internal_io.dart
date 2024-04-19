@@ -408,6 +408,8 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
   late Isolate workerIsolate;
   late _HotRestartFinalizer _hotRestartFinalizer;
 
+  AsyncMemoizer? _initializeCallOnce;
+
   static Future<void> _execute(_InitilizationArgs args) async {
     final SendPort mainApiCallSendPort = args.apiCallPortSendPort;
     final SendPort mainEventSendPort = args.eventPortSendPort;
@@ -507,62 +509,59 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
       return null;
     }
 
-    final apiCallPort = ReceivePort();
-    final eventPort = ReceivePort();
+    late InitilizationResultIO initilizationResult;
+    _initializeCallOnce ??= AsyncMemoizer();
+    await _initializeCallOnce!.runOnce(() async {
+      final apiCallPort = ReceivePort();
+      final eventPort = ReceivePort();
 
-    _hotRestartFinalizer = _HotRestartFinalizer(_nativeBindingsProvider);
+      _hotRestartFinalizer = _HotRestartFinalizer(_nativeBindingsProvider);
 
-    workerIsolate = await Isolate.spawn(
-      _execute,
-      _InitilizationArgs(
-        apiCallPort.sendPort,
-        eventPort.sendPort,
-        _hotRestartFinalizer.onExitSendPort,
-        _nativeBindingsProvider,
-        args,
-      ),
-      onExit: _hotRestartFinalizer.onExitSendPort,
-    );
+      workerIsolate = await Isolate.spawn(
+        _execute,
+        _InitilizationArgs(
+          apiCallPort.sendPort,
+          eventPort.sendPort,
+          _hotRestartFinalizer.onExitSendPort,
+          _nativeBindingsProvider,
+          args,
+        ),
+        onExit: _hotRestartFinalizer.onExitSendPort,
+      );
 
-    // Convert the ReceivePort into a StreamQueue to receive messages from the
-    // spawned isolate using a pull-based interface. Events are stored in this
-    // queue until they are accessed by `events.next`.
-    // final events = StreamQueue<dynamic>(p);
-    final responseQueue = StreamQueue<dynamic>(apiCallPort);
+      final responseQueue = StreamQueue<dynamic>(apiCallPort);
 
-    // The first message from the spawned isolate is a SendPort. This port is
-    // used to communicate with the spawned isolate.
-    // SendPort sendPort = await events.next;
-    final msg = await responseQueue.next;
-    assert(msg is InitilizationResult);
-    final initilizationResult = msg as InitilizationResultIO;
-    final requestPort = initilizationResult._apiCallPortSendPort;
-    _nativeHandle = initilizationResult.irisApiEngineNativeHandle;
+      final msg = await responseQueue.next;
+      assert(msg is InitilizationResult);
+      initilizationResult = msg as InitilizationResultIO;
+      final requestPort = initilizationResult._apiCallPortSendPort;
+      _nativeHandle = initilizationResult.irisApiEngineNativeHandle;
 
-    assert(() {
-      _hotRestartFinalizer.debugIrisApiEngineNativeHandle =
-          initilizationResult.irisApiEngineNativeHandle;
-      _hotRestartFinalizer.debugIrisCEventHandlerNativeHandle =
-          initilizationResult._debugIrisCEventHandlerNativeHandle;
-      _hotRestartFinalizer.debugIrisEventHandlerNativeHandle =
-          initilizationResult._debugIrisEventHandlerNativeHandle;
+      assert(() {
+        _hotRestartFinalizer.debugIrisApiEngineNativeHandle =
+            initilizationResult.irisApiEngineNativeHandle;
+        _hotRestartFinalizer.debugIrisCEventHandlerNativeHandle =
+            initilizationResult._debugIrisCEventHandlerNativeHandle;
+        _hotRestartFinalizer.debugIrisEventHandlerNativeHandle =
+            initilizationResult._debugIrisEventHandlerNativeHandle;
 
-      return true;
-    }());
+        return true;
+      }());
 
-    _messenger = _Messenger(requestPort, responseQueue);
+      _messenger = _Messenger(requestPort, responseQueue);
 
-    _evntSubscription = eventPort.listen((message) {
-      if (!_initilized) {
-        return;
-      }
+      _evntSubscription = eventPort.listen((message) {
+        if (!_initilized) {
+          return;
+        }
 
-      final eventMessage = parseMessage(message);
+        final eventMessage = parseMessage(message);
 
-      _irisEventMessageListener?.call(eventMessage);
+        _irisEventMessageListener?.call(eventMessage);
+      });
+
+      _initilized = true;
     });
-
-    _initilized = true;
 
     return initilizationResult;
   }
@@ -576,8 +575,8 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
     _irisEventMessageListener = null;
     _hotRestartFinalizer.dispose();
     await _evntSubscription.cancel();
-
     await _messenger.dispose();
+    _initializeCallOnce = null;
   }
 
   @override
