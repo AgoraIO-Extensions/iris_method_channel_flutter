@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.1.0...2.1.1) (2024-04-19)
+
+
+### Bug Fixes
+
+* Make dependencies more compatible with other packages ([#97](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/97)) ([48146f1](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/48146f1d6c1a765012e87b7dc39ef1939828f1db))
+* Prevent creation of multiple isolates when IrisMethodChannel.initialize is called multiple times simultaneously ([#98](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/98)) ([20779db](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/20779dbb11a93fdcf090cbd817ccc52d38794f8a))
+
 ## [2.1.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.0.1...2.1.0) (2024-03-05)
 
 
