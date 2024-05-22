@@ -279,7 +279,7 @@ void collectStack() {
   Isolate.run(() async {
     try {
       while (true) {
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 5));
         final collect_stack = NativeIrisEventBinding(_loadLib());
         final stack = collect_stack.captureStackOfTargetThread();
 

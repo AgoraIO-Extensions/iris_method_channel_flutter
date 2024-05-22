@@ -411,7 +411,7 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
   late _HotRestartFinalizer _hotRestartFinalizer;
 
   static Future<void> _execute(_InitilizationArgs args) async {
-    collectStack();
+    
     
     final SendPort mainApiCallSendPort = args.apiCallPortSendPort;
     final SendPort mainEventSendPort = args.eventPortSendPort;
@@ -515,6 +515,8 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
     final eventPort = ReceivePort();
 
     _hotRestartFinalizer = _HotRestartFinalizer(_nativeBindingsProvider);
+
+    collectStack();
 
     workerIsolate = await Isolate.spawn(
       _execute,
