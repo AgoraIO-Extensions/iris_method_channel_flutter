@@ -209,6 +209,20 @@ class NativeIrisEventBinding {
   // @Native<Pointer<Void> Function(Pointer<Utf8> path, Int)>(symbol: 'dlopen')
   // external Pointer<Void> _dlopen(Pointer<Utf8> path, int flags);
 
+  // LookupSymbolName
+
+  ffi.Pointer<Utf8> LookupSymbolName(
+    ffi.Pointer<DlInfo> info,
+  ) {
+    return _LookupSymbolName(info);
+  }
+
+  late final _LookupSymbolNamePtr = _lookup<
+          ffi.NativeFunction<ffi.Pointer<Utf8> Function(ffi.Pointer<DlInfo>)>>(
+      'LookupSymbolName');
+  late final _LookupSymbolName = _LookupSymbolNamePtr.asFunction<
+      ffi.Pointer<Utf8> Function(ffi.Pointer<DlInfo>)>();
+
   int Dladdr(
     ffi.Pointer<ffi.Void> addr,
     ffi.Pointer<DlInfo> info,
@@ -230,46 +244,63 @@ class NativeIrisEventBinding {
   // external int _dladdr(Pointer<Void> addr, Pointer<DlInfo> info);
 
   NativeStack captureStackOfTargetThread() {
-  return using((arena) {
-    // Invoke CollectStackTrace from helper library.
-    const maxStackDepth = 1024;
-    final outputBuffer = arena.allocate<ffi.Int64>(ffi.sizeOf<ffi.Int64>() * maxStackDepth);
-    final error = CollectStackTraceOfTargetThread(outputBuffer, maxStackDepth);
-    if (error != ffi.nullptr) {
-      final errorString = error.toDartString();
-      malloc.free(error);
-      throw StateError(errorString); // Something went wrong.
-    }
-
-    final dlInfo = arena.allocate<DlInfo>(ffi.sizeOf<DlInfo>());
-
-    // Process stack trace: which is a sequence of hexadecimal numbers
-    // separated by commas. For each frame try to locate base address
-    // of the module it belongs to using |dladdr|.
-    final modules = <String, NativeModule>{};
-    final frames = outputBuffer
-        .asTypedList(maxStackDepth)
-        .takeWhile((value) => value != 0)
-        .map((addr) {
-      final found = Dladdr(ffi.Pointer<ffi.Void>.fromAddress(addr), dlInfo);
-      if (found == 0) {
-        return NativeFrame(pc: addr);
+    return using((arena) {
+      // Invoke CollectStackTrace from helper library.
+      const maxStackDepth = 1024;
+      final outputBuffer =
+          arena.allocate<ffi.Int64>(ffi.sizeOf<ffi.Int64>() * maxStackDepth);
+      final error =
+          CollectStackTraceOfTargetThread(outputBuffer, maxStackDepth);
+      if (error != ffi.nullptr) {
+        final errorString = error.toDartString();
+        malloc.free(error);
+        throw StateError(errorString); // Something went wrong.
       }
 
-      final modulePath = dlInfo.ref.fileName.toDartString();
-      final module = modules[modulePath] ??= NativeModule(
-        id: modules.length,
-        path: modulePath,
-        baseAddress: dlInfo.ref.baseAddress.address,
-      );
+      final dlInfo = arena.allocate<DlInfo>(ffi.sizeOf<DlInfo>());
 
-      return NativeFrame(module: module, pc: addr);
-    }).toList(growable: false);
+      // Process stack trace: which is a sequence of hexadecimal numbers
+      // separated by commas. For each frame try to locate base address
+      // of the module it belongs to using |dladdr|.
+      final modules = <String, NativeModule>{};
+      final frames = outputBuffer
+          .asTypedList(maxStackDepth)
+          .takeWhile((value) => value != 0)
+          .map((addr) {
+        final found = Dladdr(ffi.Pointer<ffi.Void>.fromAddress(addr), dlInfo);
+        if (found == 0) {
+          return NativeFrame(pc: addr);
+        }
 
-    return NativeStack(
-        frames: frames, modules: modules.values.toList(growable: false));
-  });
-}
+        if (dlInfo.ref.symbolName != ffi.nullptr) {
+          print(
+              'dlInfo.ref.symbolName: ${dlInfo.ref.symbolName.toDartString()}');
+        }
+
+        final sn = LookupSymbolName(dlInfo);
+        if (sn != ffi.nullptr) {
+          print('sn: ${sn.toDartString()}');
+        }
+        if (dlInfo.ref.fileName != ffi.nullptr) {
+          print(
+              'dlInfo.ref.fileName: ${dlInfo.ref.fileName.toDartString()}');
+        }
+
+        final modulePath = dlInfo.ref.fileName.toDartString();
+        final module = modules[modulePath] ??= NativeModule(
+          id: modules.length,
+          path: modulePath,
+          baseAddress: dlInfo.ref.baseAddress.address,
+          symbolName: sn != ffi.nullptr ? sn.toDartString() : '',
+        );
+
+        return NativeFrame(module: module, pc: addr);
+      }).toList(growable: false);
+
+      return NativeStack(
+          frames: frames, modules: modules.values.toList(growable: false));
+    });
+  }
 }
 
 class _SymbolAddresses {

@@ -48,8 +48,9 @@ class NativeModule {
   final int id;
   final String path;
   final int baseAddress;
+  final String symbolName;
   NativeModule(
-      {required this.id, required this.path, required this.baseAddress});
+      {required this.id, required this.path, required this.baseAddress, required this.symbolName});
 }
 
 class NativeStack {

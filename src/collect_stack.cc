@@ -9,6 +9,8 @@
 #include <ucontext.h>
 #include <unistd.h>
 #include <sys/errno.h>
+#include <cxxabi.h>  // NOLINT
+#include <dlfcn.h>   // NOLINT
 
 #if defined(_M_X64) || defined(__x86_64__)
 #define HOST_ARCH_X64 1
@@ -240,4 +242,21 @@ extern "C" char* CollectStackTraceOfTargetThread(int64_t* buf, size_t buf_size) 
   }
 
   return nullptr; // Success.
+}
+
+extern "C" char * LookupSymbolName(Dl_info *info) {
+    if (info->dli_sname == nullptr) {
+    return nullptr;
+  }
+  // if (start != nullptr) {
+  //   *start = reinterpret_cast<uword>(info.dli_saddr);
+  // }
+  int status = 0;
+  size_t len = 0;
+  char* demangled = abi::__cxa_demangle(info->dli_sname, nullptr, &len, &status);
+  if (status == 0) {
+    return demangled;
+  }
+  
+  return const_cast<char *>(info->dli_sname);
 }

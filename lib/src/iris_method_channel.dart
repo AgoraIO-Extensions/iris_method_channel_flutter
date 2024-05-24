@@ -287,7 +287,7 @@ void collectStack() {
           if (frame.module != null) {
             final module = frame.module!;
             print(
-                "Frame(pc: ${frame.pc}, module: Module(path: ${module.path}, baseAddress: ${module.baseAddress}))");
+                "Frame(pc: ${frame.pc}, module: Module(path: ${module.path}, baseAddress: ${module.baseAddress}, symbolName: ${module.symbolName}))");
           } else {
             print("Frame(pc: ${frame.pc})");
           }
