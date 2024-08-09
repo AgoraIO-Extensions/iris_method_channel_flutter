@@ -867,4 +867,32 @@ void main() {
       await irisMethodChannel.dispose();
     },
   );
+
+  test(
+    'throwExceptionHandler throw Exception by default',
+    () async {
+      final currentThrowExceptionHandler = throwExceptionHandler;
+
+      expect(() => throwExceptionHandler(code: 1, message: 'message'),
+          throwsA(isA<Exception>()));
+
+      throwExceptionHandler = currentThrowExceptionHandler;
+    },
+  );
+
+  test(
+    'Can override throwExceptionHandler',
+    () async {
+      final currentThrowExceptionHandler = throwExceptionHandler;
+
+      throwExceptionHandler = ({required int code, String? message}) {
+        throw StateError('message');
+      };
+
+      expect(() => throwExceptionHandler(code: 1, message: 'message'),
+          throwsA(isA<StateError>()));
+
+      throwExceptionHandler = currentThrowExceptionHandler;
+    },
+  );
 }
