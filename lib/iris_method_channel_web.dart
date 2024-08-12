@@ -5,6 +5,7 @@
 
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
+// ignore: avoid_classes_with_only_static_members
 /// A web implementation of the IrisMethodChannelPlatform of the IrisMethodChannel plugin.
 class IrisMethodChannelWeb {
   /// Constructs a IrisMethodChannelWeb
