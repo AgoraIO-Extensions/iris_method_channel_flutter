@@ -242,7 +242,7 @@ jobs:
   integration_test_ios:
     name: ios integration test
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: macos-13
+    runs-on: macos-14
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -264,7 +264,7 @@ jobs:
   integration_test_ios_use_frameworks:
     name: ios integration test with use_frameworks
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: macos-13
+    runs-on: macos-14
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1

@@ -9,6 +9,16 @@ import 'package:iris_method_channel/src/platform/iris_method_channel_internal.da
 
 // ignore_for_file: public_member_api_docs
 
+@pragma('vm:prefer-inline')
+ThrowExceptionHandler throwExceptionHandler = _defaultThrowExceptionHandler;
+@pragma('vm:prefer-inline')
+void _defaultThrowExceptionHandler({required int code, String? message}) {
+  throw Exception();
+}
+
+typedef ThrowExceptionHandler = void Function(
+    {required int code, String? message});
+
 class IrisMethodChannel {
   IrisMethodChannel(this._nativeBindingsProvider) {
     _irisMethodChannelInternal =
