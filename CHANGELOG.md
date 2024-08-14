@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.1.1...2.2.0) (2024-08-14)
+
+
+### Features
+
+* Add throwExceptionHandler ([#102](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/102)) ([4ec2c67](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/4ec2c676d6269784e36da3fa43f7dd90190f2963))
+
 ## [2.1.1](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.1.0...2.1.1) (2024-04-19)
 
 
