@@ -7,6 +7,7 @@
 #include <cstdint>
 
 #include <memory>
+#include <mutex>
 #include <map>
 #include <vector>
 
@@ -196,14 +197,16 @@ private:
     std::map<Dart_Port, std::unique_ptr<DartMessageHandler>> dartMessageHandlerMap_;
 };
 
-DartMessageHandlerManager *dartMessageHandlerManager_ = nullptr;
+std::mutex message_handler_mutex_;
+std::unique_ptr<DartMessageHandlerManager> dartMessageHandlerManager_ = nullptr;
 
 // Initialize `dart_api_dl.h`
 EXPORT intptr_t InitDartApiDL(void *data)
 {
+    std::lock_guard<std::mutex> lock(message_handler_mutex_);
     if (!dartMessageHandlerManager_)
     {
-        dartMessageHandlerManager_ = new DartMessageHandlerManager();
+        dartMessageHandlerManager_ = std::make_unique<DartMessageHandlerManager>();
     }
 
     return dartMessageHandlerManager_->InitDartApiDL(data);
@@ -211,15 +214,13 @@ EXPORT intptr_t InitDartApiDL(void *data)
 
 EXPORT void Dispose()
 {
-    if (dartMessageHandlerManager_)
-    {
-        delete dartMessageHandlerManager_;
-        dartMessageHandlerManager_ = nullptr;
-    }
+    std::lock_guard<std::mutex> lock(message_handler_mutex_);
+    dartMessageHandlerManager_.reset();
 }
 
 EXPORT void OnEvent(EventParam *param)
 {
+    std::lock_guard<std::mutex> lock(message_handler_mutex_);
     if (dartMessageHandlerManager_)
     {
         dartMessageHandlerManager_->Post(param);
@@ -228,6 +229,7 @@ EXPORT void OnEvent(EventParam *param)
 
 EXPORT void RegisterDartPort(Dart_Port send_port)
 {
+    std::lock_guard<std::mutex> lock(message_handler_mutex_);
     if (dartMessageHandlerManager_)
     {
         dartMessageHandlerManager_->RegisterDartPort(send_port);
@@ -236,6 +238,7 @@ EXPORT void RegisterDartPort(Dart_Port send_port)
 
 EXPORT void UnregisterDartPort(Dart_Port send_port)
 {
+    std::lock_guard<std::mutex> lock(message_handler_mutex_);
     if (dartMessageHandlerManager_)
     {
         dartMessageHandlerManager_->UnregisterDartPort(send_port);
