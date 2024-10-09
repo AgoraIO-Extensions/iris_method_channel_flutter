@@ -1,6 +1,10 @@
 group 'com.agora.iris_method_channel'
 version '1.0'
 
+def safeExtGet(prop, fallback) {
+    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
+
 buildscript {
     repositories {
         google()
@@ -27,7 +31,7 @@ android {
         namespace 'com.agora.iris_method_channel'
     }
 
-    compileSdkVersion 31
+    compileSdkVersion safeExtGet('compileSdkVersion', 31)
 
     externalNativeBuild {
         cmake {
@@ -49,7 +53,7 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion safeExtGet('minSdkVersion', 21)
 
         externalNativeBuild {
             cmake {
