@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.0...2.2.1) (2024-10-09)
+
+### Bug Fixes
+
+* Fix thread-safety issues when accessing dartMessageHandlerManager_ ([#105](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/105)) ([4fe6e7b](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/4fe6e7b5f881e5edcb305fd83821aa7bc19a932d))
+* Update minSdkVersion to 21 to Fix NDK Compatibility Issue ([#106](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/106)) ([84440f0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/84440f0cac78cd5f790c0f0a50b1476b6347090b))
+
 ## [2.2.0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.1.1...2.2.0) (2024-08-14)
 
 
