@@ -199,23 +199,32 @@ private:
 
 std::mutex message_handler_mutex_;
 std::unique_ptr<DartMessageHandlerManager> dartMessageHandlerManager_ = nullptr;
+int init_dart_api_times_ = 0;
 
 // Initialize `dart_api_dl.h`
 EXPORT intptr_t InitDartApiDL(void *data)
 {
     std::lock_guard<std::mutex> lock(message_handler_mutex_);
-    if (!dartMessageHandlerManager_)
+    int ret = 0;
+    if (init_dart_api_times_ == 0 && !dartMessageHandlerManager_)
     {
         dartMessageHandlerManager_ = std::make_unique<DartMessageHandlerManager>();
+        ret = dartMessageHandlerManager_->InitDartApiDL(data);
     }
 
-    return dartMessageHandlerManager_->InitDartApiDL(data);
+    ++init_dart_api_times_;
+
+    return ret;
 }
 
 EXPORT void Dispose()
 {
     std::lock_guard<std::mutex> lock(message_handler_mutex_);
-    dartMessageHandlerManager_.reset();
+    --init_dart_api_times_;
+    if (init_dart_api_times_ == 0)
+    {
+        dartMessageHandlerManager_.reset();
+    }
 }
 
 EXPORT void OnEvent(EventParam *param)
