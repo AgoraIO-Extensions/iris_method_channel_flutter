@@ -27,9 +27,9 @@ add_library(${LIBRARY_NAME} SHARED
   ${SOURCES}
 )
 
-# set_target_properties(hello PROPERTIES
-#   PUBLIC_HEADER hello.h
-#   OUTPUT_NAME "hello"
-# )
-
 target_compile_definitions(${LIBRARY_NAME} PUBLIC DART_SHARED_LIB)
+
+if(ANDROID)
+  # Support Android 15 16k page size
+  target_link_options(${LIBRARY_NAME} PRIVATE "-Wl,-z,max-page-size=16384")
+endif()
