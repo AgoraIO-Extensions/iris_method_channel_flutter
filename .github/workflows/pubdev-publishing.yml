@@ -8,6 +8,11 @@ on:
         type: string
         required: true
         default: 'main'
+      force_publish:
+        description: Whether to force the publishing
+        type: boolean
+        required: true
+        default: false
 
 jobs:
   publishing:
@@ -36,3 +41,4 @@ jobs:
         with:
           accessToken: ${{ secrets.OAUTH_ACCESS_TOKEN }}
           refreshToken: ${{ secrets.OAUTH_REFRESH_TOKEN }}
+          force: ${{ inputs.force_publish }}
