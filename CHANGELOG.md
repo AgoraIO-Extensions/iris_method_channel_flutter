@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.2](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.1...2.2.2) (2024-10-23)
+
+### Bug Fixes
+
+* Fix missing `OnEvent` callbacks with `IrisMethodChannel` used by multiple packages ([#108](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/108)) ([fe29371](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/fe29371f5de619cc4250ccdef7e5ac0a930f3f97))
+* support android 15 16k page size ([#109](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/109)) ([0528722](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/05287229837ee4ceebb8a8045e0f4acef5f11caa))
+
 ## [2.2.1](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.0...2.2.1) (2024-10-09)
 
 ### Bug Fixes
