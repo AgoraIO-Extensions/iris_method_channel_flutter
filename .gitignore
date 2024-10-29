@@ -30,3 +30,7 @@ migrate_working_dir/
 build/
 .ccls-cache/
 Podfile.lock
+
+# OHOS
+pub-cache
+DerivedData

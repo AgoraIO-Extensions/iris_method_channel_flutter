@@ -1,0 +1,10 @@
+{
+  "module": {
+    "name": "iris_method_channel",
+    "type": "har",
+    "deviceTypes": [
+      "default",
+      "tablet"
+    ]
+  }
+}

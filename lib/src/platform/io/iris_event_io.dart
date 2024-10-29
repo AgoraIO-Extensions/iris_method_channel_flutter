@@ -4,6 +4,7 @@ import 'dart:isolate';
 
 import 'package:iris_method_channel/src/platform/io/bindings/native_iris_event_bindings.dart';
 import 'package:iris_method_channel/src/platform/iris_event_interface.dart';
+import 'package:iris_method_channel/src/platforms_ext.dart';
 
 const _libName = 'iris_method_channel';
 
@@ -12,7 +13,7 @@ ffi.DynamicLibrary _loadLib() {
     return ffi.DynamicLibrary.open('$_libName.dll');
   }
 
-  if (Platform.isAndroid) {
+  if (Platform.isAndroid || PlatformExt.isOhos) {
     return ffi.DynamicLibrary.open('lib$_libName.so');
   }
 
