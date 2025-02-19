@@ -18,11 +18,13 @@ class BufferParam {
 }
 
 class CallApiResult {
-  CallApiResult(
-      {required this.irisReturnCode, required this.data, this.rawData = ''});
+  CallApiResult({
+    required this.irisReturnCode,
+    required Map<String, dynamic> data,
+    this.rawData = '',
+  }) : data = Map<String, dynamic>.from(data);
 
   final int irisReturnCode;
-
   final Map<String, dynamic> data;
 
   // TODO(littlegnal): Remove rawData after EP-253 landed.
