@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show VoidCallback, SynchronousFuture;
+import 'package:flutter/foundation.dart'
+    show VoidCallback, SynchronousFuture, immutable;
 import 'package:iris_method_channel/src/iris_handles.dart';
 import 'package:iris_method_channel/src/platform/iris_event_interface.dart';
 import 'package:iris_method_channel/src/scoped_objects.dart';
@@ -17,12 +18,27 @@ class BufferParam {
   final int length;
 }
 
+@immutable
 class CallApiResult {
-  CallApiResult(
-      {required this.irisReturnCode, required this.data, this.rawData = ''});
+  factory CallApiResult({
+    required Map<String, dynamic> data,
+    required int irisReturnCode,
+    String rawData = '',
+  }) {
+    return CallApiResult._(
+      data: Map<String, dynamic>.from(data),
+      irisReturnCode: irisReturnCode,
+      rawData: rawData,
+    );
+  }
+
+  const CallApiResult._({
+    required this.irisReturnCode,
+    required this.data,
+    this.rawData = '',
+  });
 
   final int irisReturnCode;
-
   final Map<String, dynamic> data;
 
   // TODO(littlegnal): Remove rawData after EP-253 landed.
