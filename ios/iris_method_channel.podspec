@@ -13,8 +13,8 @@ A new Flutter plugin project.
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Your Company' => 'email@example.com' }
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
-  s.public_header_files = 'Classes/**/*.h'
+  s.source_files = 'iris_method_channel/Sources/**/*'
+  s.public_header_files = 'iris_method_channel/Sources/iris_method_channel/include/**/*.h'
   s.dependency 'Flutter'
   s.platform = :ios, '9.0'
   s.libraries = 'stdc++'

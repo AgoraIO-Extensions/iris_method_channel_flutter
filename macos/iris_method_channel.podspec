@@ -14,7 +14,7 @@ A new Flutter plugin project.
   s.author           = { 'Your Company' => 'email@example.com' }
 
   s.source           = { :path => '.' }
-  s.source_files     = 'Classes/**/*'
+  s.source_files     = 'iris_method_channel/Sources/**/*'
   s.dependency 'FlutterMacOS'
   s.requires_arc = []
   s.libraries = 'stdc++'
