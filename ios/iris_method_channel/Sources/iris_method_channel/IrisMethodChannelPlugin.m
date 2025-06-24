@@ -1,5 +1,5 @@
-#import "IrisMethodChannelPlugin.h"
-#include "../../src/iris_event.h"
+#import "./include/iris_method_channel/IrisMethodChannelPlugin.h"
+#include "../../../../src/iris_event.h"
 
 @implementation IrisMethodChannelPlugin
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {

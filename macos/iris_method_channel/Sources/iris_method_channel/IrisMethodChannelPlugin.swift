@@ -1,6 +1,10 @@
 import Cocoa
 import FlutterMacOS
 
+#if canImport(iris_method_channel_objc)
+  import iris_method_channel_objc
+#endif
+
 public class IrisMethodChannelPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "iris_method_channel", binaryMessenger: registrar.messenger)
