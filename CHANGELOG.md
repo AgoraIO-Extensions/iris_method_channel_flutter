@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.3](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.2...2.2.3) (2025-06-25)
+
+### Bug Fixes
+
+* remove internal depends ([#118](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/118)) ([356adb0](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/356adb04a054c1166d4cfc179bb8ba25ce0ee11e))
+* revert some changes of "chore: add swift package manager support… ([#116](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/116)) ([e8f9dc8](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/e8f9dc8379f31b51a58292736f6328d2a03dbdc9))
+
 ## [2.2.2](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.1...2.2.2) (2024-10-23)
 
 ### Bug Fixes
