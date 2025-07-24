@@ -21,11 +21,11 @@
 /// dummy function to avoid symbols striping when building static library.
 + (void)_irisMethodChannelDummyFunc {
   EventParam p;
-	InitDartApiDL(NULL);
-  Dispose();
-  OnEvent(NULL);
-  RegisterDartPort(0);
-  UnregisterDartPort(0);
+	Iris_InitDartApiDL(NULL);
+  Iris_Dispose();
+  Iris_OnEvent(NULL);
+  Iris_RegisterDartPort(0);
+  Iris_UnregisterDartPort(0);
 }
 
 @end
