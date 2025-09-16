@@ -31,7 +31,7 @@ android {
         namespace 'com.agora.iris_method_channel'
     }
 
-    compileSdkVersion safeExtGet('compileSdkVersion', 31)
+    compileSdkVersion safeExtGet('compileSdkVersion', 34)
 
     externalNativeBuild {
         cmake {
