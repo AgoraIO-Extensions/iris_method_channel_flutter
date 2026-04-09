@@ -1,5 +1,5 @@
 #!/bin/bash
 
 cd example
-flutter packags get
+flutter pub get
 flutter test integration_test
