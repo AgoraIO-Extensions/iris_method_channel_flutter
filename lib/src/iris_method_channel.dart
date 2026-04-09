@@ -169,7 +169,7 @@ class IrisMethodChannel {
     }
 
     final DisposableScopedObjects subScopedObjects = scopedEventHandlers
-        .putIfAbsent(scopedEvent.scopedKey, () => DisposableScopedObjects());
+        .putIfAbsent(scopedEvent.scopedKey, DisposableScopedObjects.new);
     final eventKey = EventHandlerHolderKey(
       registerName: scopedEvent.registerName,
       unregisterName: scopedEvent.unregisterName,
@@ -192,7 +192,7 @@ class IrisMethodChannel {
       final nativeEventHandlerIntPtr = result.data['observerIntPtr'];
       holder.eventHandlerHandle = nativeEventHandlerIntPtr;
     } else {
-      result = CallApiResult(irisReturnCode: 0, data: {'result': 0});
+      result = CallApiResult(irisReturnCode: 0, data: const {'result': 0});
     }
 
     holder.addEventHandler(scopedEvent.handler);
@@ -233,7 +233,7 @@ class IrisMethodChannel {
       }
     }
 
-    return CallApiResult(irisReturnCode: 0, data: {'result': 0});
+    return CallApiResult(irisReturnCode: 0, data: const {'result': 0});
   }
 
   Future<void> unregisterEventHandlers(TypedScopedKey scopedKey) async {
