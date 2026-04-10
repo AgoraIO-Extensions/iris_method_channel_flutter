@@ -158,8 +158,8 @@ jobs:
   #         done
   #       working-directory: example
     
-  integration_test_ios:
-    name: ios integration test
+  integration_test_ios_event:
+    name: ios integration test (iris_event)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     runs-on: macos-latest
     timeout-minutes: 60
@@ -187,13 +187,46 @@ jobs:
           LC_ALL: en_US.UTF-8
         run: |
           flutter packages get
-          flutter test integration_test -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
+          flutter test integration_test/iris_event_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
         working-directory: example
 
-  integration_test_ios_use_frameworks:
-    name: ios integration test with use_frameworks
+  integration_test_ios_method_channel:
+    name: ios integration test (iris_method_channel)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    needs: integration_test_ios
+    needs: integration_test_ios_event
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v1
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # Run the latest version
+          cache: true
+      - id: ios-simulator
+        uses: futureware-tech/simulator-action@v4
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        with:
+          model: 'iPhone 16 Pro'
+          os: iOS
+          os_version: '>=18.0'
+          erase_before_boot: true
+          wait_for_boot: true
+          shutdown_after_job: true
+      - name: ios integration test
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: |
+          flutter packages get
+          flutter test integration_test/iris_method_channel_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
+        working-directory: example
+
+  integration_test_ios_use_frameworks_event:
+    name: ios integration test with use_frameworks (iris_event)
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    needs: integration_test_ios_method_channel
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
@@ -222,7 +255,42 @@ jobs:
           export USE_FRAMEWORKS=true
 
           flutter packages get
-          flutter test integration_test -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
+          flutter test integration_test/iris_event_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
+        working-directory: example
+
+  integration_test_ios_use_frameworks_method_channel:
+    name: ios integration test with use_frameworks (iris_method_channel)
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    needs: integration_test_ios_use_frameworks_event
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v1
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # Run the latest version
+          cache: true
+      - id: ios-simulator
+        uses: futureware-tech/simulator-action@v4
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        with:
+          model: 'iPhone 16 Pro'
+          os: iOS
+          os_version: '>=18.0'
+          erase_before_boot: true
+          wait_for_boot: true
+          shutdown_after_job: true
+      - name: ios integration test
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: |
+          export USE_FRAMEWORKS=true
+
+          flutter packages get
+          flutter test integration_test/iris_method_channel_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
         working-directory: example
     
   # integration_test_macos:
