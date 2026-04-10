@@ -161,7 +161,7 @@ jobs:
   integration_test_ios:
     name: ios integration test
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -169,21 +169,26 @@ jobs:
         with:
           channel: 'stable' # Run the latest version
           cache: true
-      - uses: futureware-tech/simulator-action@v5
+      - uses: futureware-tech/simulator-action@v4
         with:
-          model: 'iPhone 16'
+          model: 'iPhone 16 Pro'
+          os: iOS
+          os_version: '>=18.0'
+          erase_before_boot: true
+          wait_for_boot: true
+          shutdown_after_job: true
       - name: ios integration test
         run: |
           flutter packages get
 
-          flutter test integration_test/iris_event_smoke_test.dart -d "iPhone 16" --verbose
-          flutter test integration_test/iris_method_channel_smoke_test.dart -d "iPhone 16" --verbose
+          flutter test integration_test/iris_event_smoke_test.dart -d "iPhone 16 Pro" --verbose
+          flutter test integration_test/iris_method_channel_smoke_test.dart -d "iPhone 16 Pro" --verbose
         working-directory: example
 
   integration_test_ios_use_frameworks:
     name: ios integration test with use_frameworks
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -191,22 +196,27 @@ jobs:
         with:
           channel: 'stable' # Run the latest version
           cache: true
-      - uses: futureware-tech/simulator-action@v5
+      - uses: futureware-tech/simulator-action@v4
         with:
-          model: 'iPhone 16'
+          model: 'iPhone 16 Pro'
+          os: iOS
+          os_version: '>=18.0'
+          erase_before_boot: true
+          wait_for_boot: true
+          shutdown_after_job: true
       - name: ios integration test
         run: |
           export USE_FRAMEWORKS=true
 
           flutter packages get
-          flutter test integration_test/iris_event_smoke_test.dart -d "iPhone 16" --verbose
-          flutter test integration_test/iris_method_channel_smoke_test.dart -d "iPhone 16" --verbose
+          flutter test integration_test/iris_event_smoke_test.dart -d "iPhone 16 Pro" --verbose
+          flutter test integration_test/iris_method_channel_smoke_test.dart -d "iPhone 16 Pro" --verbose
         working-directory: example
     
   integration_test_macos:
     name: macos integration test
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: macos-15
+    runs-on: macos-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -228,7 +238,7 @@ jobs:
   integration_test_android:
     name: android integration test
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
@@ -248,7 +258,8 @@ jobs:
         with:
           api-level: 31
           arch: x86_64
-          profile: pixel_7_pro
+          profile: pixel_5
+          disable-linux-hw-accel: false
           script: bash tool/scripts/run_android_integration_test.sh
 
   check_android15_16k_page_alignment:
