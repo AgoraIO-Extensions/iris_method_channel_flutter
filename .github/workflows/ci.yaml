@@ -188,6 +188,7 @@ jobs:
   integration_test_ios_use_frameworks:
     name: ios integration test with use_frameworks
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    needs: integration_test_ios
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
