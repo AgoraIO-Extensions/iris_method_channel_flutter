@@ -181,6 +181,10 @@ jobs:
           erase_before_boot: true
           wait_for_boot: true
           shutdown_after_job: true
+      - name: Grant simulator permissions
+        run: |
+          # Grant local network permission to avoid the permission dialog blocking VM Service
+          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample || true
       - name: ios integration test
         env:
           LANG: en_US.UTF-8
@@ -214,6 +218,9 @@ jobs:
           erase_before_boot: true
           wait_for_boot: true
           shutdown_after_job: true
+      - name: Grant simulator permissions
+        run: |
+          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample || true
       - name: ios integration test
         env:
           LANG: en_US.UTF-8
@@ -247,6 +254,9 @@ jobs:
           erase_before_boot: true
           wait_for_boot: true
           shutdown_after_job: true
+      - name: Grant simulator permissions
+        run: |
+          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample || true
       - name: ios integration test
         env:
           LANG: en_US.UTF-8
@@ -282,6 +292,9 @@ jobs:
           erase_before_boot: true
           wait_for_boot: true
           shutdown_after_job: true
+      - name: Grant simulator permissions
+        run: |
+          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample || true
       - name: ios integration test
         env:
           LANG: en_US.UTF-8
