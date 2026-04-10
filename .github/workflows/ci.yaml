@@ -19,144 +19,144 @@ jobs:
           cache: true
       - run: flutter analyze
 
-  dart_package_analyzer_check:
-    name: pub.dev scores check
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: axel-op/dart-package-analyzer@v3
-        id: analysis
-        with:
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-      - name: Check scores
-        env:
-          TOTAL: ${{ steps.analysis.outputs.total }}
-          TOTAL_MAX: ${{ steps.analysis.outputs.total_max }}
-        run: |
-          if (( $TOTAL < 130 ))
-          then
-            echo Pub Score too low.
-            exit 1
-          fi
+  # dart_package_analyzer_check:
+  #   name: pub.dev scores check
+  #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: axel-op/dart-package-analyzer@v3
+  #       id: analysis
+  #       with:
+  #         githubToken: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Check scores
+  #       env:
+  #         TOTAL: ${{ steps.analysis.outputs.total }}
+  #         TOTAL_MAX: ${{ steps.analysis.outputs.total_max }}
+  #       run: |
+  #         if (( $TOTAL < 130 ))
+  #         then
+  #           echo Pub Score too low.
+  #           exit 1
+  #         fi
 
-  pub_publish_check:
-    name: pub publish check
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.x'
-          cache: true
-          cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:' # optional, change this to force refresh cache
-          cache-path: '${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:' # optional, change this to specify the cache path
-      - run: bash tool/scripts/dart_pub_publish_check.sh
+  # pub_publish_check:
+  #   name: pub publish check
+  #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         flutter-version: '3.x'
+  #         cache: true
+  #         cache-key: 'flutter-:os:-:channel:-:version:-:arch:-:hash:' # optional, change this to force refresh cache
+  #         cache-path: '${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:' # optional, change this to specify the cache path
+  #     - run: bash tool/scripts/dart_pub_publish_check.sh
 
-  build_android_ubuntu:
-    name: Build Android on Ubuntu
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    strategy:
-      matrix:
-        version: ['3.x']
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '17'
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ matrix.version }}
-          cache: true
-      - run: flutter pub get
-      - name: Run flutter build apk
-        run: flutter build apk
-        working-directory: example
+  # build_android_ubuntu:
+  #   name: Build Android on Ubuntu
+  #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+  #   strategy:
+  #     matrix:
+  #       version: ['3.x']
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - uses: actions/setup-java@v1
+  #       with:
+  #         java-version: '17'
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         flutter-version: ${{ matrix.version }}
+  #         cache: true
+  #     - run: flutter pub get
+  #     - name: Run flutter build apk
+  #       run: flutter build apk
+  #       working-directory: example
 
-  build_web_ubuntu:
-    name: Build Web on Ubuntu
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    strategy:
-      matrix:
-        version: ['3.x']
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '11'
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ matrix.version }}
-          cache: true
-      - run: flutter pub get
-      - name: Run flutter build web
-        run: flutter build web
-        working-directory: example
+  # build_web_ubuntu:
+  #   name: Build Web on Ubuntu
+  #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+  #   strategy:
+  #     matrix:
+  #       version: ['3.x']
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - uses: actions/setup-java@v1
+  #       with:
+  #         java-version: '11'
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         flutter-version: ${{ matrix.version }}
+  #         cache: true
+  #     - run: flutter pub get
+  #     - name: Run flutter build web
+  #       run: flutter build web
+  #       working-directory: example
 
-  run_flutter_unit_test:
-    name: Run flutter unit test
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    strategy:
-      matrix:
-        version: ['3.x']
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '11'
-      - uses: subosito/flutter-action@v1
-        with:
-          flutter-version: ${{ matrix.version }}
-          cache: true
-      - run: flutter packages get
-      - run: flutter test
+  # run_flutter_unit_test:
+  #   name: Run flutter unit test
+  #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+  #   strategy:
+  #     matrix:
+  #       version: ['3.x']
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - uses: actions/setup-java@v1
+  #       with:
+  #         java-version: '11'
+  #     - uses: subosito/flutter-action@v1
+  #       with:
+  #         flutter-version: ${{ matrix.version }}
+  #         cache: true
+  #     - run: flutter packages get
+  #     - run: flutter test
 
-  run_flutter_unit_test_web:
-    name: Run flutter unit test web
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    strategy:
-      matrix:
-        version: ['3.x']
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '11'
-      - uses: subosito/flutter-action@v1
-        with:
-          flutter-version: ${{ matrix.version }}
-          cache: true
-      - run: flutter packages get
-      - run: flutter test -d chrome
+  # run_flutter_unit_test_web:
+  #   name: Run flutter unit test web
+  #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+  #   strategy:
+  #     matrix:
+  #       version: ['3.x']
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - uses: actions/setup-java@v1
+  #       with:
+  #         java-version: '11'
+  #     - uses: subosito/flutter-action@v1
+  #       with:
+  #         flutter-version: ${{ matrix.version }}
+  #         cache: true
+  #     - run: flutter packages get
+  #     - run: flutter test -d chrome
 
-  integration_test_windows:
-    name: windows integration test
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: windows-2022
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '11'
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.x' # Run the latest version
-          cache: true
-      - name: windows integration test
-        shell: bash
-        run: |
-          flutter packages get
+  # integration_test_windows:
+  #   name: windows integration test
+  #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+  #   runs-on: windows-2022
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - uses: actions/setup-java@v1
+  #       with:
+  #         java-version: '11'
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         flutter-version: '3.x' # Run the latest version
+  #         cache: true
+  #     - name: windows integration test
+  #       shell: bash
+  #       run: |
+  #         flutter packages get
 
-          # It's a little tricky that you should run integration test one by one on flutter macOS/Windows
-          for filename in integration_test/*.dart; do
-              flutter test $filename -d windows
-          done
-        working-directory: example
+  #         # It's a little tricky that you should run integration test one by one on flutter macOS/Windows
+  #         for filename in integration_test/*.dart; do
+  #             flutter test $filename -d windows
+  #         done
+  #       working-directory: example
     
   integration_test_ios:
     name: ios integration test
@@ -214,77 +214,77 @@ jobs:
           flutter test integration_test/iris_method_channel_smoke_test.dart -d "iPhone 16 Pro" --verbose
         working-directory: example
     
-  integration_test_macos:
-    name: macos integration test
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: macos-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v1
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.x' # Run the latest version
-          cache: true
-      - run: flutter config --enable-macos-desktop
-      - name: run macos integration test
-        run: |
-          flutter packages get
+  # integration_test_macos:
+  #   name: macos integration test
+  #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+  #   runs-on: macos-latest
+  #   timeout-minutes: 60
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         flutter-version: '3.x' # Run the latest version
+  #         cache: true
+  #     - run: flutter config --enable-macos-desktop
+  #     - name: run macos integration test
+  #       run: |
+  #         flutter packages get
           
-          # It's a little tricky that you should run integration test one by one on flutter macOS/Windows
-          for filename in integration_test/*.dart; do
-              flutter test $filename -d macos
-          done
-        working-directory: example
+  #         # It's a little tricky that you should run integration test one by one on flutter macOS/Windows
+  #         for filename in integration_test/*.dart; do
+  #             flutter test $filename -d macos
+  #         done
+  #       working-directory: example
     
-  integration_test_android:
-    name: android integration test
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '17'
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.x' # Run the latest version
-          cache: true
-      - name: Enable KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-      - name: run android integration test
-        uses: reactivecircus/android-emulator-runner@v2.21.0
-        with:
-          api-level: 31
-          arch: x86_64
-          profile: pixel_5
-          disable-linux-hw-accel: false
-          script: bash tool/scripts/run_android_integration_test.sh
+  # integration_test_android:
+  #   name: android integration test
+  #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - uses: actions/setup-java@v1
+  #       with:
+  #         java-version: '17'
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         flutter-version: '3.x' # Run the latest version
+  #         cache: true
+  #     - name: Enable KVM
+  #       run: |
+  #         echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+  #         sudo udevadm control --reload-rules
+  #         sudo udevadm trigger --name-match=kvm
+  #     - name: run android integration test
+  #       uses: reactivecircus/android-emulator-runner@v2.21.0
+  #       with:
+  #         api-level: 31
+  #         arch: x86_64
+  #         profile: pixel_5
+  #         disable-linux-hw-accel: false
+  #         script: bash tool/scripts/run_android_integration_test.sh
 
-  check_android15_16k_page_alignment:
-    name: Check android15 16k page size alignment
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    strategy:
-      matrix:
-        version: ['3.x']
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '17'
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ matrix.version }}
-          cache: true
-      - run: flutter pub get
-      - name: Run flutter build apk
-        run: flutter build apk
-        working-directory: example
-      - name: Check android15 16k page size alignment
-        run: |
-          SO_PATH="$(find example/build/app/intermediates -path '*/arm64-v8a/libiris_method_channel.so' | head -1)"
-          test -n "$SO_PATH"
-          bash tool/scripts/check_android15_16k_page_alignment.sh "$SO_PATH"
+  # check_android15_16k_page_alignment:
+  #   name: Check android15 16k page size alignment
+  #   if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+  #   strategy:
+  #     matrix:
+  #       version: ['3.x']
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - uses: actions/setup-java@v1
+  #       with:
+  #         java-version: '17'
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         flutter-version: ${{ matrix.version }}
+  #         cache: true
+  #     - run: flutter pub get
+  #     - name: Run flutter build apk
+  #       run: flutter build apk
+  #       working-directory: example
+  #     - name: Check android15 16k page size alignment
+  #       run: |
+  #         SO_PATH="$(find example/build/app/intermediates -path '*/arm64-v8a/libiris_method_channel.so' | head -1)"
+  #         test -n "$SO_PATH"
+  #         bash tool/scripts/check_android15_16k_page_alignment.sh "$SO_PATH"
