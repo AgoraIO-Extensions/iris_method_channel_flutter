@@ -171,6 +171,9 @@ jobs:
           cache: true
       - id: ios-simulator
         uses: futureware-tech/simulator-action@v4
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         with:
           model: 'iPhone 16 Pro'
           os: iOS
@@ -179,11 +182,12 @@ jobs:
           wait_for_boot: true
           shutdown_after_job: true
       - name: ios integration test
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         run: |
           flutter packages get
-
-          flutter test integration_test/iris_event_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
-          flutter test integration_test/iris_method_channel_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
+          flutter test integration_test -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
         working-directory: example
 
   integration_test_ios_use_frameworks:
@@ -200,6 +204,9 @@ jobs:
           cache: true
       - id: ios-simulator
         uses: futureware-tech/simulator-action@v4
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         with:
           model: 'iPhone 16 Pro'
           os: iOS
@@ -208,12 +215,14 @@ jobs:
           wait_for_boot: true
           shutdown_after_job: true
       - name: ios integration test
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         run: |
           export USE_FRAMEWORKS=true
 
           flutter packages get
-          flutter test integration_test/iris_event_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
-          flutter test integration_test/iris_method_channel_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
+          flutter test integration_test -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
         working-directory: example
     
   # integration_test_macos:
