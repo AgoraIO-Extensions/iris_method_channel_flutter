@@ -169,7 +169,8 @@ jobs:
         with:
           channel: 'stable' # Run the latest version
           cache: true
-      - uses: futureware-tech/simulator-action@v4
+      - id: ios-simulator
+        uses: futureware-tech/simulator-action@v4
         with:
           model: 'iPhone 16 Pro'
           os: iOS
@@ -181,8 +182,8 @@ jobs:
         run: |
           flutter packages get
 
-          flutter test integration_test/iris_event_smoke_test.dart -d "iPhone 16 Pro" --verbose
-          flutter test integration_test/iris_method_channel_smoke_test.dart -d "iPhone 16 Pro" --verbose
+          flutter test integration_test/iris_event_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
+          flutter test integration_test/iris_method_channel_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
         working-directory: example
 
   integration_test_ios_use_frameworks:
@@ -197,7 +198,8 @@ jobs:
         with:
           channel: 'stable' # Run the latest version
           cache: true
-      - uses: futureware-tech/simulator-action@v4
+      - id: ios-simulator
+        uses: futureware-tech/simulator-action@v4
         with:
           model: 'iPhone 16 Pro'
           os: iOS
@@ -210,8 +212,8 @@ jobs:
           export USE_FRAMEWORKS=true
 
           flutter packages get
-          flutter test integration_test/iris_event_smoke_test.dart -d "iPhone 16 Pro" --verbose
-          flutter test integration_test/iris_method_channel_smoke_test.dart -d "iPhone 16 Pro" --verbose
+          flutter test integration_test/iris_event_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
+          flutter test integration_test/iris_method_channel_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose
         working-directory: example
     
   # integration_test_macos:
