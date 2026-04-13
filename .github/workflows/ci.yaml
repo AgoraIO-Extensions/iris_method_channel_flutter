@@ -194,20 +194,41 @@ jobs:
           flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
         working-directory: example
-      - name: ios integration test
+      - id: ios-test-attempt-1
+        name: ios integration test (attempt 1)
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        continue-on-error: true
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_event_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
+      - name: Reset simulator before retry
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
         env:
           LANG: en_US.UTF-8
           LC_ALL: en_US.UTF-8
         run: |
-          flutter test integration_test/iris_event_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose --no-pub
+          xcrun simctl terminate "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl uninstall "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl shutdown "${{ steps.ios-simulator.outputs.udid }}" || true
+          xcrun simctl boot "${{ steps.ios-simulator.outputs.udid }}"
+          xcrun simctl bootstatus "${{ steps.ios-simulator.outputs.udid }}" -b
         working-directory: example
+      - name: ios integration test (attempt 2)
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_event_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
 
   integration_test_ios_method_channel:
     name: ios integration test (iris_method_channel)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    needs: integration_test_ios_event
     runs-on: macos-14
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v1
       - uses: subosito/flutter-action@v2
@@ -239,20 +260,41 @@ jobs:
           flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
         working-directory: example
-      - name: ios integration test
+      - id: ios-test-attempt-1
+        name: ios integration test (attempt 1)
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        continue-on-error: true
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_method_channel_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
+      - name: Reset simulator before retry
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
         env:
           LANG: en_US.UTF-8
           LC_ALL: en_US.UTF-8
         run: |
-          flutter test integration_test/iris_method_channel_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose --no-pub
+          xcrun simctl terminate "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl uninstall "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl shutdown "${{ steps.ios-simulator.outputs.udid }}" || true
+          xcrun simctl boot "${{ steps.ios-simulator.outputs.udid }}"
+          xcrun simctl bootstatus "${{ steps.ios-simulator.outputs.udid }}" -b
         working-directory: example
+      - name: ios integration test (attempt 2)
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_method_channel_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
 
   integration_test_ios_use_frameworks_event:
     name: ios integration test with use_frameworks (iris_event)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    needs: integration_test_ios_method_channel
     runs-on: macos-14
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v1
       - uses: subosito/flutter-action@v2
@@ -285,21 +327,44 @@ jobs:
           flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
         working-directory: example
-      - name: ios integration test
+      - id: ios-test-attempt-1
+        name: ios integration test (attempt 1)
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        continue-on-error: true
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_event_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
+      - name: Reset simulator before retry
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
         env:
           LANG: en_US.UTF-8
           LC_ALL: en_US.UTF-8
           USE_FRAMEWORKS: 'true'
         run: |
-          flutter test integration_test/iris_event_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose --no-pub
+          xcrun simctl terminate "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl uninstall "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl shutdown "${{ steps.ios-simulator.outputs.udid }}" || true
+          xcrun simctl boot "${{ steps.ios-simulator.outputs.udid }}"
+          xcrun simctl bootstatus "${{ steps.ios-simulator.outputs.udid }}" -b
         working-directory: example
+      - name: ios integration test (attempt 2)
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_event_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
 
   integration_test_ios_use_frameworks_method_channel:
     name: ios integration test with use_frameworks (iris_method_channel)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    needs: integration_test_ios_use_frameworks_event
     runs-on: macos-14
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v1
       - uses: subosito/flutter-action@v2
@@ -332,14 +397,38 @@ jobs:
           flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
         working-directory: example
-      - name: ios integration test
+      - id: ios-test-attempt-1
+        name: ios integration test (attempt 1)
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        continue-on-error: true
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_method_channel_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
+      - name: Reset simulator before retry
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
         env:
           LANG: en_US.UTF-8
           LC_ALL: en_US.UTF-8
           USE_FRAMEWORKS: 'true'
         run: |
-          flutter test integration_test/iris_method_channel_smoke_test.dart -d "${{ steps.ios-simulator.outputs.udid }}" --verbose --no-pub
+          xcrun simctl terminate "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl uninstall "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl shutdown "${{ steps.ios-simulator.outputs.udid }}" || true
+          xcrun simctl boot "${{ steps.ios-simulator.outputs.udid }}"
+          xcrun simctl bootstatus "${{ steps.ios-simulator.outputs.udid }}" -b
         working-directory: example
+      - name: ios integration test (attempt 2)
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_method_channel_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
     
   integration_test_macos:
     name: macos integration test
