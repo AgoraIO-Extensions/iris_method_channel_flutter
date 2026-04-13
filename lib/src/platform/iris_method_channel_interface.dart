@@ -178,23 +178,23 @@ class EventHandlerHolder
     implements DisposableObject {
   EventHandlerHolder({required this.key});
   final EventHandlerHolderKey key;
-  Set<EventLoopEventHandler> _eventHandlers = {};
+  final Set<EventLoopEventHandler> _eventHandlers = {};
 
   IrisEventHandlerHandle? eventHandlerHandle;
 
   void addEventHandler(EventLoopEventHandler eventHandler) {
-    _eventHandlers = Set.of(_eventHandlers)..add(eventHandler);
+    _eventHandlers.add(eventHandler);
   }
 
-  Future<void> removeEventHandler(EventLoopEventHandler eventHandler) async {
-    _eventHandlers = Set.of(_eventHandlers)..remove(eventHandler);
+  void removeEventHandler(EventLoopEventHandler eventHandler) {
+    _eventHandlers.remove(eventHandler);
   }
 
   Set<EventLoopEventHandler> getEventHandlers() => _eventHandlers;
 
   @override
   Future<void> dispose() {
-    _eventHandlers = {};
+    _eventHandlers.clear();
     return SynchronousFuture(null);
   }
 }

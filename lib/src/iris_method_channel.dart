@@ -2,7 +2,13 @@ import 'dart:async';
 
 import 'package:async/async.dart' show AsyncMemoizer;
 import 'package:flutter/foundation.dart'
-    show VoidCallback, debugPrint, visibleForTesting;
+    show
+        VoidCallback,
+        debugPrint,
+        visibleForTesting,
+        FlutterError,
+        FlutterErrorDetails,
+        ErrorDescription;
 import 'package:flutter/services.dart' show MethodChannel;
 import 'package:iris_method_channel/iris_method_channel.dart';
 import 'package:iris_method_channel/src/platform/iris_method_channel_internal.dart';
@@ -95,8 +101,13 @@ class IrisMethodChannel {
               break;
             }
           }
-        } catch (e) {
-          debugPrint('Error in handleEvent: $e');
+        } catch (e, s) {
+          FlutterError.reportError(FlutterErrorDetails(
+            exception: e,
+            stack: s,
+            library: 'iris_method_channel',
+            context: ErrorDescription('IrisMethodChannel handleEvent'),
+          ));
         }
       });
 

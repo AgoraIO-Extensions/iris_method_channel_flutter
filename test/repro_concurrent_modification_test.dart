@@ -1,10 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show VoidCallback, SynchronousFuture;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iris_method_channel/iris_method_channel.dart';
-import 'package:iris_method_channel/src/platform/platform_bindings_delegate_interface.dart';
-import 'package:iris_method_channel/src/scoped_objects.dart';
 
 class _FakePlatformBindingsDelegate extends PlatformBindingsDelegateInterface {
   @override
@@ -47,13 +44,12 @@ void main() {
     void simulateEventLoop(IrisMethodChannel channel, IrisEventMessage message) {
       bool handled = false;
       // We use the same snapshotting logic as in the fixed IrisMethodChannel
-      for (final sub in channel.scopedEventHandlers.values.toList()) {
+      for (final sub in channel.scopedEventHandlers.values) {
         final scopedObjects = sub as DisposableScopedObjects;
-        for (final es in scopedObjects.values.toList()) {
+        for (final es in scopedObjects.values) {
           final EventHandlerHolder eh = es as EventHandlerHolder;
           final handlersSnapshot = eh.getEventHandlers();
 
-          // FIX: Use .toList() here
           for (final e in handlersSnapshot.toList()) {
             if (!eh.getEventHandlers().contains(e)) {
               continue;
