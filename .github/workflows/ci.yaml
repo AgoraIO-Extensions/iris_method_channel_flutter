@@ -191,9 +191,8 @@ jobs:
           LC_ALL: en_US.UTF-8
         run: |
           flutter packages get
-          flutter build ios --simulator --debug --no-codesign
+          flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
-          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample
         working-directory: example
       - name: ios integration test
         env:
@@ -237,9 +236,8 @@ jobs:
           LC_ALL: en_US.UTF-8
         run: |
           flutter packages get
-          flutter build ios --simulator --debug --no-codesign
+          flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
-          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample
         working-directory: example
       - name: ios integration test
         env:
@@ -284,9 +282,8 @@ jobs:
           USE_FRAMEWORKS: 'true'
         run: |
           flutter packages get
-          flutter build ios --simulator --debug --no-codesign
+          flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
-          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample
         working-directory: example
       - name: ios integration test
         env:
@@ -332,9 +329,8 @@ jobs:
           USE_FRAMEWORKS: 'true'
         run: |
           flutter packages get
-          flutter build ios --simulator --debug --no-codesign
+          flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
-          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample
         working-directory: example
       - name: ios integration test
         env:
