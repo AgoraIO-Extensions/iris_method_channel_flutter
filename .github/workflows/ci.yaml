@@ -161,7 +161,7 @@ jobs:
   integration_test_ios_event:
     name: ios integration test (iris_event)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -169,6 +169,10 @@ jobs:
         with:
           channel: 'stable' # Run the latest version
           cache: true
+      - name: Select Xcode 16.2
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+          xcodebuild -version
       - id: ios-simulator
         uses: futureware-tech/simulator-action@v4
         env:
@@ -177,7 +181,7 @@ jobs:
         with:
           model: 'iPhone 16 Pro'
           os: iOS
-          os_version: '>=18.0'
+          os_version: '18.2'
           erase_before_boot: true
           wait_for_boot: true
           shutdown_after_job: true
@@ -189,7 +193,7 @@ jobs:
           flutter packages get
           flutter build ios --simulator --debug --no-codesign
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
-          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample || true
+          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample
         working-directory: example
       - name: ios integration test
         env:
@@ -203,7 +207,7 @@ jobs:
     name: ios integration test (iris_method_channel)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     needs: integration_test_ios_event
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -211,6 +215,10 @@ jobs:
         with:
           channel: 'stable' # Run the latest version
           cache: true
+      - name: Select Xcode 16.2
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+          xcodebuild -version
       - id: ios-simulator
         uses: futureware-tech/simulator-action@v4
         env:
@@ -219,7 +227,7 @@ jobs:
         with:
           model: 'iPhone 16 Pro'
           os: iOS
-          os_version: '>=18.0'
+          os_version: '18.2'
           erase_before_boot: true
           wait_for_boot: true
           shutdown_after_job: true
@@ -231,7 +239,7 @@ jobs:
           flutter packages get
           flutter build ios --simulator --debug --no-codesign
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
-          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample || true
+          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample
         working-directory: example
       - name: ios integration test
         env:
@@ -245,7 +253,7 @@ jobs:
     name: ios integration test with use_frameworks (iris_event)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     needs: integration_test_ios_method_channel
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -253,6 +261,10 @@ jobs:
         with:
           channel: 'stable' # Run the latest version
           cache: true
+      - name: Select Xcode 16.2
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+          xcodebuild -version
       - id: ios-simulator
         uses: futureware-tech/simulator-action@v4
         env:
@@ -261,7 +273,7 @@ jobs:
         with:
           model: 'iPhone 16 Pro'
           os: iOS
-          os_version: '>=18.0'
+          os_version: '18.2'
           erase_before_boot: true
           wait_for_boot: true
           shutdown_after_job: true
@@ -274,7 +286,7 @@ jobs:
           flutter packages get
           flutter build ios --simulator --debug --no-codesign
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
-          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample || true
+          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample
         working-directory: example
       - name: ios integration test
         env:
@@ -289,7 +301,7 @@ jobs:
     name: ios integration test with use_frameworks (iris_method_channel)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     needs: integration_test_ios_use_frameworks_event
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -297,6 +309,10 @@ jobs:
         with:
           channel: 'stable' # Run the latest version
           cache: true
+      - name: Select Xcode 16.2
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+          xcodebuild -version
       - id: ios-simulator
         uses: futureware-tech/simulator-action@v4
         env:
@@ -305,7 +321,7 @@ jobs:
         with:
           model: 'iPhone 16 Pro'
           os: iOS
-          os_version: '>=18.0'
+          os_version: '18.2'
           erase_before_boot: true
           wait_for_boot: true
           shutdown_after_job: true
@@ -318,7 +334,7 @@ jobs:
           flutter packages get
           flutter build ios --simulator --debug --no-codesign
           xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
-          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample || true
+          xcrun simctl privacy "${{ steps.ios-simulator.outputs.udid }}" grant local-network com.agora.irisMethodChannelExample
         working-directory: example
       - name: ios integration test
         env:
