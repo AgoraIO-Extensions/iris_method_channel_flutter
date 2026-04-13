@@ -186,8 +186,9 @@ class EventHandlerHolder
     _eventHandlers.add(eventHandler);
   }
 
-  void removeEventHandler(EventLoopEventHandler eventHandler) {
+  Future<void> removeEventHandler(EventLoopEventHandler eventHandler) {
     _eventHandlers.remove(eventHandler);
+    return SynchronousFuture(null);
   }
 
   Set<EventLoopEventHandler> getEventHandlers() => _eventHandlers;

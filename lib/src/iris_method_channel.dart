@@ -8,7 +8,8 @@ import 'package:flutter/foundation.dart'
         visibleForTesting,
         FlutterError,
         FlutterErrorDetails,
-        ErrorDescription;
+        ErrorDescription,
+        kDebugMode;
 import 'package:flutter/services.dart' show MethodChannel;
 import 'package:iris_method_channel/iris_method_channel.dart';
 import 'package:iris_method_channel/src/platform/iris_method_channel_internal.dart';
@@ -108,6 +109,9 @@ class IrisMethodChannel {
             library: 'iris_method_channel',
             context: ErrorDescription('IrisMethodChannel handleEvent'),
           ));
+          if (kDebugMode) {
+            rethrow;
+          }
         }
       });
 
