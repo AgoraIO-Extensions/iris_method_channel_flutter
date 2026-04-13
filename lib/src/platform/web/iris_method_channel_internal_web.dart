@@ -31,10 +31,15 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
   }
 
   @override
-  Future<void> dispose() async {
+  Future<void> dispose({
+    bool destroyNativeApiEngine = true,
+    bool destroyRtcEngine = false,
+  }) async {
     assert(_irisApiEngine != null);
 
-    _platformBindingsDelegate?.destroyNativeApiEngine(_irisApiEngine!);
+    if (destroyNativeApiEngine) {
+      _platformBindingsDelegate?.destroyNativeApiEngine(_irisApiEngine!);
+    }
 
     _platformBindingsDelegate
         ?.destroyIrisEventHandler(_irisEventHandlerHandle!);

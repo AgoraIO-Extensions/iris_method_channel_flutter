@@ -10,7 +10,6 @@
 #include <mutex>
 #include <map>
 #include <vector>
-
 #include "iris_life_cycle_observer.h"
 
 using namespace irisevent;
@@ -22,7 +21,7 @@ static void Finalizer(void *isolate_callback_data, void *buffer)
 
 class DartMessageHandlerBase
 {
-    EXPORT virtual void Post(EventParam *param) = 0;
+    EXPORT virtual bool Post(EventParam *param) = 0;
 };
 
 class DartMessageHandler : public DartMessageHandlerBase
@@ -45,16 +44,16 @@ public:
         }
     }
 
-    EXPORT void Post(EventParam *param) override
+    EXPORT bool Post(EventParam *param) override
     {
         if (!param)
         {
-            return;
+            return false;
         }
 
         if (dart_send_port_ == 0)
         {
-            return;
+            return false;
         }
 
         Dart_CObject c_event;
@@ -123,7 +122,12 @@ public:
                     {
                         Finalizer(nullptr, it->value.as_external_typed_data.peer);
                     }
+                    return false;
                 }
+            }
+            else
+            {
+                return false;
             }
 
             if (param->buffer_count != 0)
@@ -145,8 +149,20 @@ public:
                 sizeof(c_event_data_arr) / sizeof(c_event_data_arr[0]);
 
             if (exit_flag_ == 0)
-                Dart_PostCObject_DL(dart_send_port_, &c_on_event_data);
+            {
+                bool result = Dart_PostCObject_DL(dart_send_port_, &c_on_event_data);
+                if (!result)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
         }
+
+        return true;
     }
 
 private:
@@ -174,12 +190,21 @@ public:
         return Dart_InitializeApiDL(data);
     }
 
-    void Post(EventParam *param) override
+    bool Post(EventParam *param) override
     {
-        for (auto const &it : dartMessageHandlerMap_)
+        for (auto it = dartMessageHandlerMap_.begin();
+             it != dartMessageHandlerMap_.end();)
         {
-            it.second->Post(param);
+            if (!it->second->Post(param))
+            {
+                it = dartMessageHandlerMap_.erase(it);
+                continue;
+            }
+
+            ++it;
         }
+
+        return true;
     }
 
     void RegisterDartPort(Dart_Port send_port)
@@ -211,7 +236,6 @@ EXPORT intptr_t Iris_InitDartApiDL(void *data)
         dartMessageHandlerManager_ = std::make_unique<DartMessageHandlerManager>();
         ret = dartMessageHandlerManager_->InitDartApiDL(data);
     }
-
     ++init_dart_api_times_;
 
     return ret;

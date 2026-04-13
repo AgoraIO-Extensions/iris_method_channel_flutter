@@ -128,7 +128,10 @@ abstract class IrisMethodChannelInternal {
 
   void setIrisEventMessageListener(IrisEventMessageListener listener);
 
-  Future<void> dispose();
+  Future<void> dispose({
+    bool destroyNativeApiEngine = true,
+    bool destroyRtcEngine = false,
+  });
 }
 
 class ScopedEvent {

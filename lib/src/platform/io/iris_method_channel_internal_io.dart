@@ -43,16 +43,36 @@ class _Messenger implements DisposableObject {
   }
 
   @override
-  Future<void> dispose() async {
+  Future<void> dispose({
+    bool destroyNativeApiEngine = true,
+    bool destroyRtcEngine = false,
+  }) async {
     if (_isDisposed) {
       return;
     }
     _isDisposed = true;
-    requestPort.send(null);
-    // Wait for `executor.dispose` done in isolate.
-    await responseQueue.next;
+    final disposeAckPort = ReceivePort();
+    requestPort.send(_DisposeRequest(
+      destroyNativeApiEngine: destroyNativeApiEngine,
+      destroyRtcEngine: destroyRtcEngine,
+      ackSendPort: disposeAckPort.sendPort,
+    ));
+    await disposeAckPort.first;
+    disposeAckPort.close();
     responseQueue.cancel();
   }
+}
+
+class _DisposeRequest {
+  const _DisposeRequest({
+    required this.destroyNativeApiEngine,
+    required this.destroyRtcEngine,
+    required this.ackSendPort,
+  });
+
+  final bool destroyNativeApiEngine;
+  final bool destroyRtcEngine;
+  final SendPort ackSendPort;
 }
 
 class _InitilizationArgs {
@@ -154,11 +174,19 @@ class _HotRestartFinalizer {
     nativeBindingDelegate.destroyNativeApiEngine(IrisApiEngineHandle(
         ffi.Pointer<ffi.Void>.fromAddress(_debugIrisApiEngineNativeHandle!)));
 
-    calloc.free(ffi.Pointer<ffi.Void>.fromAddress(
-        _debugIrisCEventHandlerNativeHandle!));
-    nativeBindingDelegate.destroyIrisEventHandler(IrisEventHandlerHandle(
-        ffi.Pointer<ffi.Void>.fromAddress(
-            _debugIrisEventHandlerNativeHandle!)));
+    final debugIrisCEventHandlerNativeHandle = _debugIrisCEventHandlerNativeHandle;
+    if (debugIrisCEventHandlerNativeHandle != null) {
+      calloc.free(ffi.Pointer<ffi.Void>.fromAddress(
+          debugIrisCEventHandlerNativeHandle));
+    }
+
+    final debugIrisEventHandlerNativeHandle =
+        _debugIrisEventHandlerNativeHandle;
+    if (debugIrisEventHandlerNativeHandle != null) {
+      nativeBindingDelegate.destroyIrisEventHandler(IrisEventHandlerHandle(
+          ffi.Pointer<ffi.Void>.fromAddress(
+              debugIrisEventHandlerNativeHandle)));
+    }
 
     final irisEvent =
         (provider.provideIrisEvent() ?? IrisEventIO()) as IrisEventIO;
@@ -305,6 +333,7 @@ class _IrisMethodChannelNative {
   }
 
   final IrisEventIO _irisEvent;
+  SendPort? _eventSendPort;
   ffi.Pointer<iris.IrisCEventHandler>? _irisCEventHandler;
   int get irisCEventHandlerNativeHandle {
     assert(_irisCEventHandler != null);
@@ -312,13 +341,21 @@ class _IrisMethodChannelNative {
   }
 
   ffi.Pointer<ffi.Void>? _irisEventHandler;
-  int get irisEventHandlerNativeHandle {
-    assert(_irisEventHandler != null);
-    return _irisEventHandler!.address;
+  int? get irisEventHandlerNativeHandle => _irisEventHandler?.address;
+
+  void _ensureIrisEventHandlerCreated() {
+    if (_irisEventHandler != null) {
+      return;
+    }
+
+    _irisEventHandler = _nativeIrisApiEngineBinding.createIrisEventHandler(
+            IrisCEventHandlerHandle(_irisCEventHandler!))()
+        as ffi.Pointer<ffi.Void>?;
   }
 
   CreateApiEngineResult initilize(
       SendPort sendPort, List<InitilizationArgProvider> args) {
+    _eventSendPort = sendPort;
     _irisEvent.initialize();
     _irisEvent.registerEventHandler(sendPort);
 
@@ -328,10 +365,6 @@ class _IrisMethodChannelNative {
 
     _irisCEventHandler = calloc<iris.IrisCEventHandler>()
       ..ref.OnEvent = _irisEvent.onEventPtr.cast();
-
-    _irisEventHandler = _nativeIrisApiEngineBinding.createIrisEventHandler(
-            IrisCEventHandlerHandle(_irisCEventHandler!))()
-        as ffi.Pointer<ffi.Void>?;
 
     return createResult;
   }
@@ -347,24 +380,44 @@ class _IrisMethodChannelNative {
     return _invokeMethod(methodCall);
   }
 
-  void dispose() {
+  void dispose({
+    bool destroyNativeApiEngine = true,
+    bool destroyRtcEngine = false,
+  }) {
     assert(_irisApiEnginePtr != null);
 
-    _nativeIrisApiEngineBinding
-        .destroyNativeApiEngine(IrisApiEngineHandle(_irisApiEnginePtr!));
+    if (destroyNativeApiEngine) {
+      final apiEngineHandle = IrisApiEngineHandle(_irisApiEnginePtr!);
+      if (destroyRtcEngine) {
+        _nativeIrisApiEngineBinding
+            .destroyNativeApiEngineAndRtcEngine(apiEngineHandle);
+      } else {
+        _nativeIrisApiEngineBinding.destroyNativeApiEngine(apiEngineHandle);
+      }
+    }
     _irisApiEnginePtr = null;
+
+    final eventSendPort = _eventSendPort;
+    if (eventSendPort != null) {
+      _irisEvent.unregisterEventHandler(eventSendPort);
+      _eventSendPort = null;
+    }
 
     _irisEvent.dispose();
 
-    _nativeIrisApiEngineBinding
-        .destroyIrisEventHandler(IrisEventHandlerHandle(_irisEventHandler!));
-    _irisEventHandler = null;
+    final irisEventHandler = _irisEventHandler;
+    if (irisEventHandler != null) {
+      _nativeIrisApiEngineBinding
+          .destroyIrisEventHandler(IrisEventHandlerHandle(irisEventHandler));
+      _irisEventHandler = null;
+    }
 
     calloc.free(_irisCEventHandler!);
     _irisCEventHandler = null;
   }
 
   CallApiResult createNativeEventHandler(IrisMethodCall methodCall) {
+    _ensureIrisEventHandlerCreated();
     final eventHandlerIntPtr = _irisEventHandler!.address;
     final result = _invokeMethod(IrisMethodCall(
       methodCall.funcName,
@@ -453,9 +506,12 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
 
     // Wait for messages from the main isolate.
     await for (final request in apiCallPort) {
-      if (request == null) {
-        executor.dispose();
-        mainApiCallSendPort.send(null);
+      if (request is _DisposeRequest) {
+        executor.dispose(
+          destroyNativeApiEngine: request.destroyNativeApiEngine,
+          destroyRtcEngine: request.destroyRtcEngine,
+        );
+        request.ackSendPort.send(true);
         // Ready exit the isolate.
         break;
       }
@@ -567,7 +623,10 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
   }
 
   @override
-  Future<void> dispose() async {
+  Future<void> dispose({
+    bool destroyNativeApiEngine = true,
+    bool destroyRtcEngine = false,
+  }) async {
     if (!_initilized) {
       return;
     }
@@ -575,7 +634,10 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
     _irisEventMessageListener = null;
     _hotRestartFinalizer.dispose();
     await _evntSubscription.cancel();
-    await _messenger.dispose();
+    await _messenger.dispose(
+      destroyNativeApiEngine: destroyNativeApiEngine,
+      destroyRtcEngine: destroyRtcEngine,
+    );
     _initializeCallOnce = null;
   }
 

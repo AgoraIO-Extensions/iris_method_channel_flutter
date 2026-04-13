@@ -160,6 +160,18 @@ class IrisMethodChannel {
     _initializeCallOnce = null;
   }
 
+  Future<void> disposeAndDestroyNativeRtcEngine() async {
+    if (!_initilized) {
+      return;
+    }
+    _initilized = false;
+
+    await _irisMethodChannelInternal.dispose(
+      destroyRtcEngine: true,
+    );
+    _initializeCallOnce = null;
+  }
+
   Future<CallApiResult> registerEventHandler(
       ScopedEvent scopedEvent, String params) async {
     if (!_initilized) {

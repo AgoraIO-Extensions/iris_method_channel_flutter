@@ -108,6 +108,18 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
   }
 
   @override
+  void destroyNativeApiEngineAndRtcEngine(IrisApiEngineHandle apiEnginePtr) {
+    final record = CallApiRecord(
+      const IrisMethodCall('destroyNativeApiEngineAndRtcEngine', '{}'),
+      CallApiRecordApiParam(
+        'destroyNativeApiEngineAndRtcEngine',
+        '{}',
+      ),
+    );
+    messenger.addCallApiRecord(record);
+  }
+
+  @override
   void initialize() {
     final record = CallApiRecord(
       const IrisMethodCall('initialize', '{}'),

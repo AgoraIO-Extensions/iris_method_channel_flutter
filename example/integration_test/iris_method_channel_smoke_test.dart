@@ -43,6 +43,9 @@ class _FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
   void destroyNativeApiEngine(IrisApiEngineHandle apiEnginePtr) {}
 
   @override
+  void destroyNativeApiEngineAndRtcEngine(IrisApiEngineHandle apiEnginePtr) {}
+
+  @override
   void initialize() {}
 
   @override
