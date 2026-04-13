@@ -64,30 +64,39 @@ class IrisMethodChannel {
       initilizationResult = await _irisMethodChannelInternal.initilize(args);
 
       _irisMethodChannelInternal.setIrisEventMessageListener((eventMessage) {
-        bool handled = false;
-        for (final sub in scopedEventHandlers.values) {
-          final scopedObjects = sub as DisposableScopedObjects;
-          for (final es in scopedObjects.values) {
-            final EventHandlerHolder eh = es as EventHandlerHolder;
-            // We need the event handlers with the same _EventHandlerHolderKey consume the message.
-            for (final e in eh.getEventHandlers()) {
-              if (e.handleEvent(eventMessage.event, eventMessage.data,
-                  eventMessage.buffers)) {
-                handled = true;
+        try {
+          bool handled = false;
+          for (final sub in scopedEventHandlers.values) {
+            final scopedObjects = sub as DisposableScopedObjects;
+            for (final es in scopedObjects.values) {
+              final EventHandlerHolder eh = es as EventHandlerHolder;
+              // We need the event handlers with the same _EventHandlerHolderKey consume the message.
+              final handlersSnapshot = eh.getEventHandlers();
+
+              for (final e in handlersSnapshot.toList()) {
+                if (!eh.getEventHandlers().contains(e)) {
+                  continue;
+                }
+                if (e.handleEvent(eventMessage.event, eventMessage.data,
+                    eventMessage.buffers)) {
+                  handled = true;
+                }
+              }
+
+              // Break the loop after the event handlers in the same EventHandlerHolder
+              // consume the message.
+              if (handled) {
+                break;
               }
             }
 
-            // Break the loop after the event handlers in the same EventHandlerHolder
-            // consume the message.
+            // Break the loop if there is an EventHandlerHolder consume the message.
             if (handled) {
               break;
             }
           }
-
-          // Break the loop if there is an EventHandlerHolder consume the message.
-          if (handled) {
-            break;
-          }
+        } catch (e) {
+          debugPrint('Error in handleEvent: $e');
         }
       });
 
