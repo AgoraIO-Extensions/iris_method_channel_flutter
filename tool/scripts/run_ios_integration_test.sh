@@ -22,13 +22,26 @@ cleanup() {
   rm -rf "${TMP_DIR}"
 }
 
+terminate_process_tree() {
+  local pid="$1"
+  local signal="$2"
+  local children
+
+  children="$(pgrep -P "${pid}" 2>/dev/null || true)"
+  for child in ${children}; do
+    terminate_process_tree "${child}" "${signal}"
+  done
+
+  kill "-${signal}" "${pid}" 2>/dev/null || true
+}
+
 trap cleanup EXIT
 
 mkfifo "${OUTPUT_PIPE}"
 
 (
   cd example
-  flutter test "${TEST_FILE}" -d "${DEVICE_UDID}" --verbose --no-pub --reporter expanded "$@"
+  exec flutter test "${TEST_FILE}" -d "${DEVICE_UDID}" --verbose --no-pub --reporter expanded "$@"
 ) >"${OUTPUT_PIPE}" 2>&1 &
 FLUTTER_PID=$!
 
@@ -55,9 +68,9 @@ while true; do
     if [[ ${vm_service_deadline} -gt 0 ]] && [[ ${vm_service_ready} -eq 0 ]] && [[ ${SECONDS} -ge ${vm_service_deadline} ]]; then
       echo "[ci] Timed out waiting ${VM_SERVICE_WAIT_TIMEOUT_SECONDS}s for VM Service after Flutter started waiting. Terminating test run." >&2
       vm_service_timed_out=1
-      kill "${FLUTTER_PID}" 2>/dev/null || true
+      terminate_process_tree "${FLUTTER_PID}" TERM
       sleep 2
-      kill -9 "${FLUTTER_PID}" 2>/dev/null || true
+      terminate_process_tree "${FLUTTER_PID}" KILL
       break
     fi
 
@@ -67,9 +80,13 @@ while true; do
   fi
 done
 
-while IFS= read -r line <&3; do
-  printf '%s\n' "${line}"
-done || true
+if [[ ${vm_service_timed_out} -eq 0 ]]; then
+  while IFS= read -r line <&3; do
+    printf '%s\n' "${line}"
+  done || true
+else
+  exec 3<&-
+fi
 
 set +e
 wait "${FLUTTER_PID}"
