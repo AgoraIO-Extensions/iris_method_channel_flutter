@@ -10,6 +10,26 @@ import 'package:iris_method_channel/src/platform/iris_method_channel_interface.d
 
 // ignore_for_file: public_member_api_docs, non_constant_identifier_names
 
+JSAny _eventParamBufferEntryToJS(Object value) {
+  if (value is Uint8List) {
+    return value.toJS;
+  }
+  if (value is int) {
+    return value.toJS;
+  }
+  if (value is double) {
+    return value.toJS;
+  }
+  if (value is String) {
+    // Web `setupLocalVideo` passes the platform-view div id as `BufferParam`.
+    return value.toJS;
+  }
+  if (value is bool) {
+    return value.toJS;
+  }
+  return value as JSObject;
+}
+
 @JS('EventParam')
 @anonymous
 @staticInterop
@@ -19,7 +39,7 @@ class EventParam {
     String data = '',
     int data_size = 0,
     String result = '',
-    List<Uint8List> buffer = const [],
+    List<Object> buffer = const [],
     List<int> length = const [],
     int buffer_count = 0,
   }) => EventParam._(
@@ -27,7 +47,7 @@ class EventParam {
     data: data,
     data_size: data_size,
     result: result,
-    buffer: buffer.map((value) => value.toJS).toList().toJS,
+    buffer: buffer.map(_eventParamBufferEntryToJS).toList().toJS,
     length: length.map((value) => value.toJS).toList().toJS,
     buffer_count: buffer_count,
   );
@@ -37,7 +57,7 @@ class EventParam {
     String data,
     int data_size,
     String result,
-    JSArray<JSUint8Array> buffer,
+    JSArray<JSAny> buffer,
     JSArray<JSNumber> length,
     int buffer_count,
   });
@@ -49,13 +69,14 @@ extension EventParamExt on EventParam {
   external int get data_size;
   external String get result;
   @JS('buffer')
-  external JSArray<JSUint8Array> get _buffer;
+  external JSArray<JSAny> get _buffer;
   @JS('length')
   external JSArray<JSNumber> get _length;
   external int get buffer_count;
 
-  List<Uint8List> get buffer =>
-      _buffer.toDart.map((value) => value.toDart).toList(growable: false);
+  List<Uint8List> get buffer => _buffer.toDart
+      .map((value) => (value as JSUint8Array).toDart)
+      .toList(growable: false);
 
   List<int> get length =>
       _length.toDart.map((value) => value.toDartInt).toList(growable: false);
@@ -105,7 +126,7 @@ external IrisApiEngine createIrisApiEngine();
 external int disposeIrisApiEngine(IrisApiEngine engine_ptr);
 
 @JS('callIrisApi')
-external int callIrisApi(IrisApiEngine engine_ptr, ApiParam apiParam);
+external JSPromise<JSAny> callIrisApi(IrisApiEngine engine_ptr, ApiParam apiParam);
 
 typedef IrisEventHandlerFuncJS = void Function(EventParam param);
 typedef IrisCEventHandler = JSExportedDartFunction;
