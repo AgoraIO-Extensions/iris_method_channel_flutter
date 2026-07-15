@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.2.5](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.4...2.2.5) (2026-04-13)
+
+### Bug Fixes
+
+* avoid concurrent modification during event dispatch ([#128](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/128)) ([b275c0f](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/b275c0fa1ddde27906817caf2dfeaece292f176d))
+
+## [2.2.4](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.3...2.2.4) (2025-07-24)
+
+### Bug Fixes
+
+* prefix exported Iris symbols to avoid collisions ([#122](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/122)) ([292ce32](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/292ce32edaaf8ad8db9706a7c8bfc7d6ec4f613a))
+
 ## [2.2.3](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.2...2.2.3) (2025-06-25)
 
 ### Bug Fixes

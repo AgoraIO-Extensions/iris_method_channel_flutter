@@ -175,7 +175,7 @@ class ScopedObjects {
   /// [DisposableObject.dispose]
   Future<void> clear() async {
     _isClearing = true;
-    final values = pool.values;
+    final values = pool.values.toList();
     for (final v in values) {
       await v?._disposeOnParentClear();
     }

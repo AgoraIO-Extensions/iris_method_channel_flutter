@@ -31,7 +31,7 @@ class NativeIrisEventBinding {
 
   late final _InitDartApiDLPtr =
       _lookup<ffi.NativeFunction<ffi.IntPtr Function(ffi.Pointer<ffi.Void>)>>(
-          'InitDartApiDL');
+          'Iris_InitDartApiDL');
   late final _InitDartApiDL =
       _InitDartApiDLPtr.asFunction<int Function(ffi.Pointer<ffi.Void>)>();
 
@@ -40,7 +40,7 @@ class NativeIrisEventBinding {
   }
 
   late final _DisposePtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function()>>('Dispose');
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('Iris_Dispose');
   late final _Dispose = _DisposePtr.asFunction<void Function()>();
 
   void OnEvent(
@@ -53,7 +53,7 @@ class NativeIrisEventBinding {
 
   late final _OnEventPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<EventParam>)>>(
-          'OnEvent');
+          'Iris_OnEvent');
   late final _OnEvent =
       _OnEventPtr.asFunction<void Function(ffi.Pointer<EventParam>)>();
 
@@ -131,7 +131,7 @@ class NativeIrisEventBinding {
 
   late final _RegisterDartPortPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
-          'RegisterDartPort');
+          'Iris_RegisterDartPort');
   late final _RegisterDartPort =
       _RegisterDartPortPtr.asFunction<void Function(int)>();
 
@@ -145,7 +145,7 @@ class NativeIrisEventBinding {
 
   late final _UnregisterDartPortPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
-          'UnregisterDartPort');
+          'Iris_UnregisterDartPort');
   late final _UnregisterDartPort =
       _UnregisterDartPortPtr.asFunction<void Function(int)>();
 
