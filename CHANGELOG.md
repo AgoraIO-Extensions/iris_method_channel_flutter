@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.2.5-ohos.225](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.3-ohos.223...2.2.5-ohos.225) (2026-07-15)
+## [2.2.5-ohos.225](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.3-ohos.223...2.2.5-ohos.225) (2026-07-29)
 
 ## [2.2.5](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.4...2.2.5) (2026-04-13)
 
