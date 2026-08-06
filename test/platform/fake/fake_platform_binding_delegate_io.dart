@@ -159,7 +159,7 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
   @override
   Future<CallApiResult> callApiAsync(IrisMethodCall methodCall,
       IrisApiEngineHandle apiEnginePtr, IrisApiParamHandle param) async {
-    return CallApiResult(irisReturnCode: 0, data: {});
+    return CallApiResult(irisReturnCode: 0, data: const {});
   }
 }
 

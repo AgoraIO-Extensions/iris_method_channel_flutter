@@ -256,7 +256,6 @@ void main() {
         .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
     expect(callRecord1.length, 1);
 
-    // On web, we do not call the `destroyIrisEventHandler`
     if (!kIsWeb) {
       final callRecord2 = messenger.callApiRecords
           .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
@@ -272,7 +271,6 @@ void main() {
         .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
     expect(callRecord1.length, 1);
 
-    // On web, we do not call the `destroyIrisEventHandler`
     if (!kIsWeb) {
       final callRecord2 = messenger.callApiRecords
           .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
@@ -301,7 +299,6 @@ void main() {
         .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
     expect(callRecord1.length, 1);
 
-    // On web, we do not call the `destroyIrisEventHandler`
     if (!kIsWeb) {
       final callRecord2 = messenger.callApiRecords
           .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');

@@ -381,7 +381,7 @@ class _IrisMethodChannelNative {
 
     CallApiResult result;
     if (methodCall.funcName.isEmpty) {
-      result = CallApiResult(irisReturnCode: 0, data: {'result': 0});
+      result = CallApiResult(irisReturnCode: 0, data: const {'result': 0});
     } else {
       result = _invokeMethod(methodCall);
     }
