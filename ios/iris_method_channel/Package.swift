@@ -22,16 +22,6 @@ let package = Package(
             ],
             cxxSettings: [
                 .unsafeFlags(["-std=c++14"])
-            ],
-            linkerSettings: [
-                // These symbols are looked up through DynamicLibrary.process().
-                .unsafeFlags([
-                    "-Xlinker", "-u", "-Xlinker", "_Iris_InitDartApiDL",
-                    "-Xlinker", "-u", "-Xlinker", "_Iris_Dispose",
-                    "-Xlinker", "-u", "-Xlinker", "_Iris_OnEvent",
-                    "-Xlinker", "-u", "-Xlinker", "_Iris_RegisterDartPort",
-                    "-Xlinker", "-u", "-Xlinker", "_Iris_UnregisterDartPort"
-                ])
             ]
         )
     ]

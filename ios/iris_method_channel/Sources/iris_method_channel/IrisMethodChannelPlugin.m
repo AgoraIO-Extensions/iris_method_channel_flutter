@@ -3,6 +3,16 @@
 
 @implementation IrisMethodChannelPlugin
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
+  // Keep Iris event entry points linked without invoking their lifecycle APIs.
+  volatile const void *irisSymbols[] = {
+      (const void *)&Iris_InitDartApiDL,
+      (const void *)&Iris_Dispose,
+      (const void *)&Iris_OnEvent,
+      (const void *)&Iris_RegisterDartPort,
+      (const void *)&Iris_UnregisterDartPort,
+  };
+  (void)irisSymbols;
+
   FlutterMethodChannel* channel = [FlutterMethodChannel
       methodChannelWithName:@"iris_method_channel"
             binaryMessenger:[registrar messenger]];
