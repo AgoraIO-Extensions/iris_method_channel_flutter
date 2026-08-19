@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.6](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.5...2.2.6) (2026-08-19)
+
+### Bug Fixes
+
+* iris method channel spm symbol retain ([#136](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/136)) ([6ad5429](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/6ad54290c005c812887ab4a2842518d596965b16))
+
 ## [2.2.5](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.4...2.2.5) (2026-04-13)
 
 ### Bug Fixes
