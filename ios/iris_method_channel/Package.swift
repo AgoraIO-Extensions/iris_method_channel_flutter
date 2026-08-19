@@ -9,7 +9,11 @@ let package = Package(
         .iOS("12.0"),
     ],
     products: [
-        .library(name: "iris-method-channel", targets: ["iris_method_channel"])
+        .library(
+            name: "iris-method-channel",
+            type: .dynamic,
+            targets: ["iris_method_channel"]
+        )
     ],
     dependencies: [],
     targets: [
