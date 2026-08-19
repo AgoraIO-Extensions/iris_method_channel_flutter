@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:js';
+import 'dart:js_interop';
 import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:iris_method_channel/iris_method_channel.dart';
 
@@ -108,7 +108,7 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
         _platformBindingsDelegate!.createApiEngine(args);
     _irisApiEngine = createApiEngineResult.apiEnginePtr;
 
-    _irisEventHandlerFuncJS = allowInterop(_onEventFromJS);
+    _irisEventHandlerFuncJS = _onEventFromJS.toJS;
     _irisEventHandlerHandle = _platformBindingsDelegate!.createIrisEventHandler(
         IrisCEventHandlerHandle(_irisEventHandlerFuncJS!));
 
