@@ -145,6 +145,18 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
   }
 
   @override
+  void destroyNativeApiEngineAndRtcEngine(IrisApiEngineHandle apiEnginePtr) {
+    final record = CallApiRecord(
+      const IrisMethodCall('destroyNativeApiEngineAndRtcEngine', '{}'),
+      CallApiRecordApiParam(
+        'destroyNativeApiEngineAndRtcEngine',
+        '{}',
+      ),
+    );
+    apiCallPortSendPort.send(record);
+  }
+
+  @override
   void initialize() {
     final record = CallApiRecord(
       const IrisMethodCall('initialize', '{}'),
@@ -159,7 +171,7 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
   @override
   Future<CallApiResult> callApiAsync(IrisMethodCall methodCall,
       IrisApiEngineHandle apiEnginePtr, IrisApiParamHandle param) async {
-    return CallApiResult(irisReturnCode: 0, data: {});
+    return CallApiResult(irisReturnCode: 0, data: const {});
   }
 }
 

@@ -43,12 +43,15 @@ class _FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
   void destroyNativeApiEngine(IrisApiEngineHandle apiEnginePtr) {}
 
   @override
+  void destroyNativeApiEngineAndRtcEngine(IrisApiEngineHandle apiEnginePtr) {}
+
+  @override
   void initialize() {}
 
   @override
   Future<CallApiResult> callApiAsync(IrisMethodCall methodCall,
       IrisApiEngineHandle apiEnginePtr, IrisApiParamHandle param) async {
-    return CallApiResult(irisReturnCode: 0, data: {});
+    return CallApiResult(irisReturnCode: 0, data: const {});
   }
 }
 

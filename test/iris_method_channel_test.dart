@@ -256,11 +256,14 @@ void main() {
         .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
     expect(callRecord1.length, 1);
 
-    // On web, we do not call the `destroyIrisEventHandler`
     if (!kIsWeb) {
+      final unregisterEventPortCallRecord = messenger.callApiRecords.where(
+          (e) => e.methodCall.funcName == 'IrisEvent_unregisterEventHandler');
+      expect(unregisterEventPortCallRecord.length, 1);
+
       final callRecord2 = messenger.callApiRecords
           .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
-      expect(callRecord2.length, 1);
+      expect(callRecord2.length, 0);
     }
   });
 
@@ -272,11 +275,183 @@ void main() {
         .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
     expect(callRecord1.length, 1);
 
-    // On web, we do not call the `destroyIrisEventHandler`
     if (!kIsWeb) {
+      final unregisterEventPortCallRecord = messenger.callApiRecords.where(
+          (e) => e.methodCall.funcName == 'IrisEvent_unregisterEventHandler');
+      expect(unregisterEventPortCallRecord.length, 1);
+
       final callRecord2 = messenger.callApiRecords
           .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
-      expect(callRecord2.length, 1);
+      expect(callRecord2.length, 0);
+    }
+  });
+
+  test('disposeAndDestroyNativeRtcEngine', () async {
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.disposeAndDestroyNativeRtcEngine();
+
+    final destroyNativeApiEngineCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
+    final destroyNativeApiEngineAndRtcEngineCallRecord =
+        messenger.callApiRecords.where((e) =>
+            e.methodCall.funcName == 'destroyNativeApiEngineAndRtcEngine');
+
+    if (kIsWeb) {
+      expect(destroyNativeApiEngineCallRecord.length, 1);
+      expect(destroyNativeApiEngineAndRtcEngineCallRecord.length, 0);
+    } else {
+      expect(destroyNativeApiEngineCallRecord.length, 0);
+      expect(destroyNativeApiEngineAndRtcEngineCallRecord.length, 1);
+
+      final unregisterEventPortCallRecord = messenger.callApiRecords.where(
+          (e) => e.methodCall.funcName == 'IrisEvent_unregisterEventHandler');
+      expect(unregisterEventPortCallRecord.length, 1);
+
+      final destroyIrisEventHandlerCallRecord = messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
+      expect(destroyIrisEventHandlerCallRecord.length, 0);
+    }
+  });
+
+  test('disposeAndDestroyNativeRtcEngine multiple times', () async {
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.disposeAndDestroyNativeRtcEngine();
+    await irisMethodChannel.disposeAndDestroyNativeRtcEngine();
+
+    final destroyNativeApiEngineCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
+    final destroyNativeApiEngineAndRtcEngineCallRecord =
+        messenger.callApiRecords.where((e) =>
+            e.methodCall.funcName == 'destroyNativeApiEngineAndRtcEngine');
+
+    if (kIsWeb) {
+      expect(destroyNativeApiEngineCallRecord.length, 1);
+      expect(destroyNativeApiEngineAndRtcEngineCallRecord.length, 0);
+    } else {
+      expect(destroyNativeApiEngineCallRecord.length, 0);
+      expect(destroyNativeApiEngineAndRtcEngineCallRecord.length, 1);
+
+      final unregisterEventPortCallRecord = messenger.callApiRecords.where(
+          (e) => e.methodCall.funcName == 'IrisEvent_unregisterEventHandler');
+      expect(unregisterEventPortCallRecord.length, 1);
+    }
+  });
+
+  test('can re-initialize after disposeAndDestroyNativeRtcEngine', () async {
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.disposeAndDestroyNativeRtcEngine();
+
+    final createCallRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'createApiEngine');
+    expect(createCallRecord1.length, 1);
+
+    await irisMethodChannel.initilize([]);
+    final callApiResult = await irisMethodChannel.invokeMethod(
+        const IrisMethodCall('a_func_name_after_destroy_rtc', 'params'));
+
+    expect(callApiResult.irisReturnCode, 0);
+    expect(callApiResult.data, {});
+
+    final createCallRecord2 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'createApiEngine');
+    expect(createCallRecord2.length, 2);
+
+    final invokeCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'a_func_name_after_destroy_rtc');
+    expect(invokeCallRecord.length, 1);
+
+    await irisMethodChannel.disposeAndDestroyNativeRtcEngine();
+  });
+
+  test('invokeMethod after disposeAndDestroyNativeRtcEngine', () async {
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.disposeAndDestroyNativeRtcEngine();
+
+    final callApiResult = await irisMethodChannel
+        .invokeMethod(const IrisMethodCall('a_func_name', 'params'));
+    final callRecord1 = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'a_func_name');
+    expect(callRecord1.length, 0);
+
+    expect(callApiResult.irisReturnCode, kDisposedIrisMethodCallReturnCode);
+    expect(callApiResult.data, kDisposedIrisMethodCallData);
+  });
+
+  test(
+      'disposeAndDestroyNativeRtcEngine uses dedicated ack when requests are pending',
+      () async {
+    await irisMethodChannel.initilize([]);
+
+    const key = TypedScopedKey(_TestEventLoopEventHandler);
+    final eventHandler = _TestEventLoopEventHandler();
+    await irisMethodChannel.registerEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler),
+        jsonEncode({}));
+
+    irisMethodChannel.unregisterEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler),
+        jsonEncode({}));
+
+    await irisMethodChannel.disposeAndDestroyNativeRtcEngine();
+
+    final destroyNativeApiEngineCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
+    final destroyNativeApiEngineAndRtcEngineCallRecord =
+        messenger.callApiRecords.where((e) =>
+            e.methodCall.funcName == 'destroyNativeApiEngineAndRtcEngine');
+
+    if (kIsWeb) {
+      expect(destroyNativeApiEngineCallRecord.length, 1);
+      expect(destroyNativeApiEngineAndRtcEngineCallRecord.length, 0);
+    } else {
+      expect(destroyNativeApiEngineCallRecord.length, 0);
+      expect(destroyNativeApiEngineAndRtcEngineCallRecord.length, 1);
+
+      final destroyIrisEventHandlerCallRecord = messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
+      expect(destroyIrisEventHandlerCallRecord.length, 1);
+    }
+  });
+
+  test('dispose uses dedicated ack when requests are pending', () async {
+    await irisMethodChannel.initilize([]);
+
+    const key = TypedScopedKey(_TestEventLoopEventHandler);
+    final eventHandler = _TestEventLoopEventHandler();
+    await irisMethodChannel.registerEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler),
+        jsonEncode({}));
+
+    irisMethodChannel.unregisterEventHandler(
+        ScopedEvent(
+            scopedKey: key,
+            registerName: 'registerEventHandler',
+            unregisterName: 'unregisterEventHandler',
+            handler: eventHandler),
+        jsonEncode({}));
+
+    await irisMethodChannel.dispose();
+
+    final destroyNativeApiEngineCallRecord = messenger.callApiRecords
+        .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
+    expect(destroyNativeApiEngineCallRecord.length, 1);
+
+    if (!kIsWeb) {
+      final destroyIrisEventHandlerCallRecord = messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
+      expect(destroyIrisEventHandlerCallRecord.length, 1);
     }
   });
 
@@ -301,11 +476,14 @@ void main() {
         .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
     expect(callRecord1.length, 1);
 
-    // On web, we do not call the `destroyIrisEventHandler`
     if (!kIsWeb) {
+      final unregisterEventPortCallRecord = messenger.callApiRecords.where(
+          (e) => e.methodCall.funcName == 'IrisEvent_unregisterEventHandler');
+      expect(unregisterEventPortCallRecord.length, 1);
+
       final callRecord2 = messenger.callApiRecords
           .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
-      expect(callRecord2.length, 1);
+      expect(callRecord2.length, 0);
     }
   });
 

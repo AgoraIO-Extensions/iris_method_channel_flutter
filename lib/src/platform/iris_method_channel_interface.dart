@@ -71,34 +71,29 @@ abstract class IrisMethodCallListRequest implements Request {
 }
 
 class ApiCallRequest extends IrisMethodCallRequest {
-  const ApiCallRequest(IrisMethodCall methodCall) : super(methodCall);
+  const ApiCallRequest(super.methodCall);
 }
 
 // ignore: unused_element
 class ApiCallListRequest extends IrisMethodCallListRequest {
-  const ApiCallListRequest(List<IrisMethodCall> methodCalls)
-      : super(methodCalls);
+  const ApiCallListRequest(super.methodCalls);
 }
 
 class CreateNativeEventHandlerRequest extends IrisMethodCallRequest {
-  const CreateNativeEventHandlerRequest(IrisMethodCall methodCall)
-      : super(methodCall);
+  const CreateNativeEventHandlerRequest(super.methodCall);
 }
 
 // ignore: unused_element
 class CreateNativeEventHandlerListRequest extends IrisMethodCallListRequest {
-  const CreateNativeEventHandlerListRequest(List<IrisMethodCall> methodCalls)
-      : super(methodCalls);
+  const CreateNativeEventHandlerListRequest(super.methodCalls);
 }
 
 class DestroyNativeEventHandlerRequest extends IrisMethodCallRequest {
-  const DestroyNativeEventHandlerRequest(IrisMethodCall methodCall)
-      : super(methodCall);
+  const DestroyNativeEventHandlerRequest(super.methodCall);
 }
 
 class DestroyNativeEventHandlerListRequest extends IrisMethodCallListRequest {
-  const DestroyNativeEventHandlerListRequest(List<IrisMethodCall> methodCalls)
-      : super(methodCalls);
+  const DestroyNativeEventHandlerListRequest(super.methodCalls);
 }
 
 /// Listener when hot restarted.
@@ -133,7 +128,10 @@ abstract class IrisMethodChannelInternal {
 
   void setIrisEventMessageListener(IrisEventMessageListener listener);
 
-  Future<void> dispose();
+  Future<void> dispose({
+    bool destroyNativeApiEngine = true,
+    bool destroyRtcEngine = false,
+  });
 }
 
 class ScopedEvent {

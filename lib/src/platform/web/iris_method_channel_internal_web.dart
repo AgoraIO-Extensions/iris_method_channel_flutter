@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:js';
+import 'dart:js_interop';
+
 import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:iris_method_channel/iris_method_channel.dart';
-
 import 'package:iris_method_channel/src/platform/web/bindings/iris_api_common_bindings_js.dart'
     as js_binding;
 
@@ -31,10 +31,15 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
   }
 
   @override
-  Future<void> dispose() async {
+  Future<void> dispose({
+    bool destroyNativeApiEngine = true,
+    bool destroyRtcEngine = false,
+  }) async {
     assert(_irisApiEngine != null);
 
-    _platformBindingsDelegate?.destroyNativeApiEngine(_irisApiEngine!);
+    if (destroyNativeApiEngine) {
+      _platformBindingsDelegate?.destroyNativeApiEngine(_irisApiEngine!);
+    }
 
     _platformBindingsDelegate
         ?.destroyIrisEventHandler(_irisEventHandlerHandle!);
@@ -66,7 +71,7 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
     } else if (request is DestroyNativeEventHandlerRequest) {
       final methodCall = request.methodCall;
       if (methodCall.funcName.isEmpty) {
-        return CallApiResult(irisReturnCode: 0, data: {'result': 0});
+        return CallApiResult(irisReturnCode: 0, data: const {'result': 0});
       }
 
       return _executeMethodCall(methodCall);
@@ -74,7 +79,7 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
       final IrisMethodCall methodCall = request.methodCall;
       return _executeMethodCall(methodCall);
     } else {
-      return CallApiResult(irisReturnCode: 0, data: {'result': 0});
+      return CallApiResult(irisReturnCode: 0, data: const {'result': 0});
     }
   }
 
@@ -108,7 +113,7 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
         _platformBindingsDelegate!.createApiEngine(args);
     _irisApiEngine = createApiEngineResult.apiEnginePtr;
 
-    _irisEventHandlerFuncJS = allowInterop(_onEventFromJS);
+    _irisEventHandlerFuncJS = _onEventFromJS.toJS;
     _irisEventHandlerHandle = _platformBindingsDelegate!.createIrisEventHandler(
         IrisCEventHandlerHandle(_irisEventHandlerFuncJS!));
 

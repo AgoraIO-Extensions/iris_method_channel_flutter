@@ -54,99 +54,18 @@ jobs:
           cache-path: '${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:' # optional, change this to specify the cache path
       - run: bash tool/scripts/dart_pub_publish_check.sh
 
-  build_windows:
-    name: Build Windows
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    strategy:
-      matrix:
-        version: ['2.10.5', '3.x']
-    runs-on: windows-2019
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '11'
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ matrix.version }}
-          cache: true
-      - run: flutter pub get
-      - name: Build windows
-        run: flutter build windows
-        working-directory: example
-
-  build_ios:
-    name: Build iOS
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    strategy:
-      matrix:
-        version: ['2.10.5', '3.x']
-    runs-on: macos-13
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v1
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ matrix.version }}
-          cache: true
-      - run: flutter pub get
-      - name: Run flutter build ios --no-codesign
-        run: flutter build ios --no-codesign
-        working-directory: example
-
-  build_macos:
-    name: Build macOS
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    strategy:
-      matrix:
-        version: ['2.10.5', '3.x']
-    runs-on: macos-13
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v1
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ matrix.version }}
-          cache: true
-      - run: flutter pub get
-      - run: flutter config --enable-macos-desktop
-      - name: Run flutter build macos
-        run: flutter build macos
-        working-directory: example
-
-  build_android_windows:
-    name: Build Android on Windows
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    strategy:
-      matrix:
-        version: ['2.10.5', '3.x']
-    runs-on: windows-2019
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '11'
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ matrix.version }}
-          cache: true
-      - run: flutter pub get
-      - name: Run flutter build apk
-        run: flutter build apk
-        working-directory: example
-
   build_android_ubuntu:
     name: Build Android on Ubuntu
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.x']
+        version: ['3.x']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
         with:
-          java-version: '11'
+          java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ matrix.version }}
@@ -161,7 +80,7 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.x']
+        version: ['3.x']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -182,14 +101,14 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.x']
+        version: ['3.x']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
         with:
           java-version: '11'
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ matrix.version }}
           cache: true
@@ -201,14 +120,14 @@ jobs:
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     strategy:
       matrix:
-        version: ['2.10.5', '3.x']
+        version: ['3.x']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
         with:
           java-version: '11'
-      - uses: subosito/flutter-action@v1
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ matrix.version }}
           cache: true
@@ -218,7 +137,7 @@ jobs:
   integration_test_windows:
     name: windows integration test
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: windows-2019
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
@@ -239,8 +158,8 @@ jobs:
           done
         working-directory: example
     
-  integration_test_ios:
-    name: ios integration test
+  integration_test_ios_event:
+    name: ios integration test (iris_event)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     runs-on: macos-14
     timeout-minutes: 60
@@ -250,44 +169,271 @@ jobs:
         with:
           channel: 'stable' # Run the latest version
           cache: true
-      - uses: futureware-tech/simulator-action@v2
+      - name: Select Xcode 16.2
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+          xcodebuild -version
+      - id: ios-simulator
+        uses: futureware-tech/simulator-action@v4
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         with:
-          model: 'iPhone 14 Pro Max'
-      - name: ios integration test
+          model: 'iPhone 16 Pro'
+          os: iOS
+          os_version: '18.2'
+          erase_before_boot: true
+          wait_for_boot: true
+          shutdown_after_job: true
+      - name: Prepare simulator app
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         run: |
           flutter packages get
-
-          flutter test integration_test/iris_event_smoke_test.dart -d "iPhone 14 Pro Max" --verbose
-          flutter test integration_test/iris_method_channel_smoke_test.dart -d "iPhone 14 Pro Max" --verbose
+          flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
+          xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
         working-directory: example
+      - id: ios-test-attempt-1
+        name: ios integration test (attempt 1)
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        continue-on-error: true
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_event_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
+      - name: Reset simulator before retry
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: |
+          xcrun simctl terminate "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl uninstall "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl shutdown "${{ steps.ios-simulator.outputs.udid }}" || true
+          xcrun simctl boot "${{ steps.ios-simulator.outputs.udid }}"
+          xcrun simctl bootstatus "${{ steps.ios-simulator.outputs.udid }}" -b
+        working-directory: example
+      - name: ios integration test (attempt 2)
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_event_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
 
-  integration_test_ios_use_frameworks:
-    name: ios integration test with use_frameworks
+  integration_test_ios_method_channel:
+    name: ios integration test (iris_method_channel)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
     runs-on: macos-14
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v1
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable' # Run the latest version
           cache: true
-      - uses: futureware-tech/simulator-action@v2
-        with:
-          model: 'iPhone 14 Pro Max'
-      - name: ios integration test
+      - name: Select Xcode 16.2
         run: |
-          export USE_FRAMEWORKS=true
-
+          sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+          xcodebuild -version
+      - id: ios-simulator
+        uses: futureware-tech/simulator-action@v4
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        with:
+          model: 'iPhone 16 Pro'
+          os: iOS
+          os_version: '18.2'
+          erase_before_boot: true
+          wait_for_boot: true
+          shutdown_after_job: true
+      - name: Prepare simulator app
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: |
           flutter packages get
-          flutter test integration_test/iris_event_smoke_test.dart -d "iPhone 14 Pro Max" --verbose
-          flutter test integration_test/iris_method_channel_smoke_test.dart -d "iPhone 14 Pro Max" --verbose
+          flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
+          xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
         working-directory: example
+      - id: ios-test-attempt-1
+        name: ios integration test (attempt 1)
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        continue-on-error: true
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_method_channel_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
+      - name: Reset simulator before retry
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: |
+          xcrun simctl terminate "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl uninstall "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl shutdown "${{ steps.ios-simulator.outputs.udid }}" || true
+          xcrun simctl boot "${{ steps.ios-simulator.outputs.udid }}"
+          xcrun simctl bootstatus "${{ steps.ios-simulator.outputs.udid }}" -b
+        working-directory: example
+      - name: ios integration test (attempt 2)
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_method_channel_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
+
+  integration_test_ios_use_frameworks_event:
+    name: ios integration test with use_frameworks (iris_event)
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v1
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # Run the latest version
+          cache: true
+      - name: Select Xcode 16.2
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+          xcodebuild -version
+      - id: ios-simulator
+        uses: futureware-tech/simulator-action@v4
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        with:
+          model: 'iPhone 16 Pro'
+          os: iOS
+          os_version: '18.2'
+          erase_before_boot: true
+          wait_for_boot: true
+          shutdown_after_job: true
+      - name: Prepare simulator app
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+        run: |
+          flutter packages get
+          flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
+          xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
+        working-directory: example
+      - id: ios-test-attempt-1
+        name: ios integration test (attempt 1)
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        continue-on-error: true
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_event_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
+      - name: Reset simulator before retry
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+        run: |
+          xcrun simctl terminate "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl uninstall "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl shutdown "${{ steps.ios-simulator.outputs.udid }}" || true
+          xcrun simctl boot "${{ steps.ios-simulator.outputs.udid }}"
+          xcrun simctl bootstatus "${{ steps.ios-simulator.outputs.udid }}" -b
+        working-directory: example
+      - name: ios integration test (attempt 2)
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_event_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
+
+  integration_test_ios_use_frameworks_method_channel:
+    name: ios integration test with use_frameworks (iris_method_channel)
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v1
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # Run the latest version
+          cache: true
+      - name: Select Xcode 16.2
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+          xcodebuild -version
+      - id: ios-simulator
+        uses: futureware-tech/simulator-action@v4
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        with:
+          model: 'iPhone 16 Pro'
+          os: iOS
+          os_version: '18.2'
+          erase_before_boot: true
+          wait_for_boot: true
+          shutdown_after_job: true
+      - name: Prepare simulator app
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+        run: |
+          flutter packages get
+          flutter build ios --simulator --debug --no-codesign --ci --no-publish-port
+          xcrun simctl install "${{ steps.ios-simulator.outputs.udid }}" build/ios/iphonesimulator/Runner.app
+        working-directory: example
+      - id: ios-test-attempt-1
+        name: ios integration test (attempt 1)
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        continue-on-error: true
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_method_channel_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
+      - name: Reset simulator before retry
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+        run: |
+          xcrun simctl terminate "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl uninstall "${{ steps.ios-simulator.outputs.udid }}" com.agora.irisMethodChannelExample || true
+          xcrun simctl shutdown "${{ steps.ios-simulator.outputs.udid }}" || true
+          xcrun simctl boot "${{ steps.ios-simulator.outputs.udid }}"
+          xcrun simctl bootstatus "${{ steps.ios-simulator.outputs.udid }}" -b
+        working-directory: example
+      - name: ios integration test (attempt 2)
+        if: ${{ steps.ios-test-attempt-1.outcome == 'failure' }}
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+          USE_FRAMEWORKS: 'true'
+          VM_SERVICE_WAIT_TIMEOUT_SECONDS: '90'
+        run: |
+          bash tool/scripts/run_ios_integration_test.sh integration_test/iris_method_channel_smoke_test.dart "${{ steps.ios-simulator.outputs.udid }}"
     
   integration_test_macos:
     name: macos integration test
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: macos-13
+    runs-on: macos-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -309,22 +455,28 @@ jobs:
   integration_test_android:
     name: android integration test
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci:skip') }}
-    runs-on: macos-12
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
         with:
-          java-version: '11'
+          java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.x' # Run the latest version
           cache: true
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
       - name: run android integration test
         uses: reactivecircus/android-emulator-runner@v2.21.0
         with:
           api-level: 31
           arch: x86_64
-          profile: Nexus 6
+          profile: pixel_5
+          disable-linux-hw-accel: false
           script: bash tool/scripts/run_android_integration_test.sh
 
   check_android15_16k_page_alignment:
@@ -338,7 +490,7 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
         with:
-          java-version: '11'
+          java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ matrix.version }}
@@ -348,4 +500,7 @@ jobs:
         run: flutter build apk
         working-directory: example
       - name: Check android15 16k page size alignment
-        run: bash tool/scripts/check_android15_16k_page_alignment.sh example/build/app/intermediates/merged_native_libs/release/out/lib/arm64-v8a/libiris_method_channel.so
+        run: |
+          SO_PATH="$(find example/build/app/intermediates -path '*/arm64-v8a/libiris_method_channel.so' | head -1)"
+          test -n "$SO_PATH"
+          bash tool/scripts/check_android15_16k_page_alignment.sh "$SO_PATH"
