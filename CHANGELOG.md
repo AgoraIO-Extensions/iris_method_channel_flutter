@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.7](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.6...2.2.7) (2026-08-20)
+
+### Bug Fixes
+
+* retain Iris symbols in macOS SwiftPM Archive ([#138](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/issues/138)) ([a5ada23](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/commit/a5ada236b64648a101ba4b72dfa4964454348a7c))
+
 ## [2.2.6](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.5...2.2.6) (2026-08-19)
 
 ### Bug Fixes
