@@ -55,6 +55,8 @@ android {
     defaultConfig {
         minSdkVersion safeExtGet('minSdkVersion', 21)
 
+        consumerProguardFiles 'consumer-rules.pro'
+
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=c++_static'

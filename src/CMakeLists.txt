@@ -14,6 +14,8 @@ set(SOURCES
      "${CMAKE_CURRENT_SOURCE_DIR}/iris_event.cc"
      "${CMAKE_CURRENT_SOURCE_DIR}/iris_life_cycle_observer.h"
      "${CMAKE_CURRENT_SOURCE_DIR}/iris_life_cycle_observer.cc"
+     "${CMAKE_CURRENT_SOURCE_DIR}/iris_native_session.h"
+     "${CMAKE_CURRENT_SOURCE_DIR}/iris_native_session.cc"
      "${CMAKE_CURRENT_SOURCE_DIR}/dart-sdk/include/dart_api_dl.h"
      "${CMAKE_CURRENT_SOURCE_DIR}/dart-sdk/include/dart_api.h"
      "${CMAKE_CURRENT_SOURCE_DIR}/dart-sdk/include/dart_native_api.h"

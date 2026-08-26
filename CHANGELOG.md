@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.6 (2026-07-31)
+
+### Bug Fixes
+
+* ensure Android native Iris sessions are released when Flutter teardown is skipped
+
 ## [2.2.5](https://github.com/AgoraIO-Extensions/iris_method_channel_flutter/compare/2.2.4...2.2.5) (2026-04-13)
 
 ### Bug Fixes

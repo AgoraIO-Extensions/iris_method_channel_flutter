@@ -10,6 +10,16 @@ class CreateApiEngineResult {
   final Map<String, Object> extraData;
 }
 
+/// Native cleanup callbacks used by the Android session registry.
+///
+/// Function addresses use integers so this interface remains available to web
+/// implementations that cannot import `dart:ffi`.
+abstract class NativeCleanupCallbackProvider {
+  int get destroyNativeApiEngineAddress;
+
+  int get destroyIrisEventHandlerAddress;
+}
+
 /// Unified interface for iris API engine of different platforms.
 /// On IO, the [PlatformBindingsDelegateInterface] is running inside a seperate isolate which is
 /// spawned by the main isolate, so you should not share any objects in this class.

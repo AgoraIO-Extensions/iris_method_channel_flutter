@@ -10,6 +10,9 @@ import 'package:iris_method_channel/src/platform/web/bindings/iris_api_common_bi
 
 class InitilizationResultWeb implements InitilizationResult {
   InitilizationResultWeb();
+
+  @override
+  int get nativeSessionId => 0;
 }
 
 class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
@@ -101,7 +104,9 @@ class IrisMethodChannelInternalWeb implements IrisMethodChannelInternal {
 
   @override
   Future<InitilizationResult?> initilize(
-      List<InitilizationArgProvider> args) async {
+    List<InitilizationArgProvider> args, {
+    int nativeSessionId = 0,
+  }) async {
     _platformBindingsDelegate =
         _nativeBindingsProvider.provideNativeBindingDelegate();
     final createApiEngineResult =

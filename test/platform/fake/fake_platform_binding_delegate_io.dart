@@ -30,10 +30,17 @@ class _FakeNativeBindingDelegateMessenger implements CallApiRecorderInterface {
   }
 }
 
-class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
+class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface
+    implements NativeCleanupCallbackProvider {
   FakeNativeBindingDelegate(this.apiCallPortSendPort);
 
   final SendPort apiCallPortSendPort;
+
+  @override
+  int get destroyIrisEventHandlerAddress => 200;
+
+  @override
+  int get destroyNativeApiEngineAddress => 100;
 
   void _response(ffi.Pointer<iris.ApiParam> param, Map<String, Object> result) {
     using<void>((Arena arena) {
@@ -163,10 +170,85 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
   }
 }
 
-class _FakeIrisEvent implements IrisEventIO {
-  _FakeIrisEvent(this.apiCallPortSendPort);
+class _FakeIrisEvent implements IrisEventIO, NativeSessionLifecycle {
+  _FakeIrisEvent(
+    this.apiCallPortSendPort, {
+    this.nativeSessionAttachResult,
+    this.throwOnNativeSessionAttach = false,
+    this.throwOnNativeSessionDestroy = false,
+  });
 
   final SendPort apiCallPortSendPort;
+  final int? nativeSessionAttachResult;
+  final bool throwOnNativeSessionAttach;
+  final bool throwOnNativeSessionDestroy;
+
+  @override
+  int createNativeSession({
+    required int nativeSessionId,
+    required int irisApiEngineAddress,
+    required int irisEventHandlerAddress,
+    required int irisCEventHandlerAddress,
+    required int destroyNativeApiEngineAddress,
+    required int destroyIrisEventHandlerAddress,
+  }) {
+    final record = CallApiRecord(
+      const IrisMethodCall('createNativeSession', '{}'),
+      CallApiRecordApiParam(
+        'createNativeSession',
+        jsonEncode({
+          'nativeSessionId': nativeSessionId,
+          'irisApiEngineAddress': irisApiEngineAddress,
+          'irisEventHandlerAddress': irisEventHandlerAddress,
+          'irisCEventHandlerAddress': irisCEventHandlerAddress,
+          'destroyNativeApiEngineAddress': destroyNativeApiEngineAddress,
+          'destroyIrisEventHandlerAddress': destroyIrisEventHandlerAddress,
+        }),
+      ),
+    );
+    apiCallPortSendPort.send(record);
+    if (throwOnNativeSessionAttach) {
+      throw StateError('createNativeSession failed');
+    }
+    return nativeSessionAttachResult ?? nativeSessionId;
+  }
+
+  @override
+  bool acquireNativeSession(int sessionId) {
+    return true;
+  }
+
+  @override
+  void releaseNativeSession(int sessionId) {
+    // No-op in tests.
+  }
+
+  @override
+  void destroyNativeSession(int sessionId) {
+    final record = CallApiRecord(
+      const IrisMethodCall('destroyNativeSession', '{}'),
+      CallApiRecordApiParam(
+        'destroyNativeSession',
+        jsonEncode({'sessionId': sessionId}),
+      ),
+    );
+    apiCallPortSendPort.send(record);
+    if (throwOnNativeSessionDestroy) {
+      throw StateError('destroyNativeSession failed');
+    }
+  }
+
+  @override
+  void forceDestroyNativeSession(int sessionId) {
+    final record = CallApiRecord(
+      const IrisMethodCall('forceDestroyNativeSession', '{}'),
+      CallApiRecordApiParam(
+        'forceDestroyNativeSession',
+        jsonEncode({'sessionId': sessionId}),
+      ),
+    );
+    apiCallPortSendPort.send(record);
+  }
 
   @override
   void initialize() {
@@ -244,11 +326,20 @@ class FakeNativeBindingDelegateProvider extends PlatformBindingsProvider {
 }
 
 class PlatformTesterInterfaceIO implements PlatformTesterInterface {
-  PlatformTesterInterfaceIO() {
+  PlatformTesterInterfaceIO({
+    int? nativeSessionAttachResult,
+    bool throwOnNativeSessionAttach = false,
+    bool throwOnNativeSessionDestroy = false,
+  }) {
     messenger = _FakeNativeBindingDelegateMessenger();
     final FakeNativeBindingDelegate nativeBindingDelegate =
         FakeNativeBindingDelegate(messenger.getSendPort());
-    final _FakeIrisEvent irisEvent = _FakeIrisEvent(messenger.getSendPort());
+    final _FakeIrisEvent irisEvent = _FakeIrisEvent(
+      messenger.getSendPort(),
+      nativeSessionAttachResult: nativeSessionAttachResult,
+      throwOnNativeSessionAttach: throwOnNativeSessionAttach,
+      throwOnNativeSessionDestroy: throwOnNativeSessionDestroy,
+    );
     final nativeBindingsProvider =
         FakeNativeBindingDelegateProvider(nativeBindingDelegate, irisEvent);
     irisMethodChannel = IrisMethodChannel(nativeBindingsProvider);

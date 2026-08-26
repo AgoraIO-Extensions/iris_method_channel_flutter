@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/services.dart' show StandardMethodCodec, MethodCall;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, debugDefaultTargetPlatformOverride, kIsWeb;
+import 'package:flutter/services.dart'
+    show MethodCall, MethodChannel, PlatformException, StandardMethodCodec;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:iris_method_channel/iris_method_channel.dart';
 
@@ -28,6 +30,10 @@ class _TestEventLoopEventHandler extends EventLoopEventHandler {
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  const platformChannel = MethodChannel('iris_method_channel');
+
+  Future<Object?> handlePlatformCall(MethodCall call) async =>
+      call.method == 'prepareInitialize' ? 42 : true;
 
   platformCases();
 
@@ -38,9 +44,21 @@ void main() {
   late PlatformTesterInterface platformTester;
 
   setUp(() {
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      platformChannel,
+      handlePlatformCall,
+    );
     platformTester = getPlatformTester();
     irisMethodChannel = platformTester.getIrisMethodChannel();
     messenger = platformTester.getCallApiRecorder();
+  });
+
+  tearDown(() {
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      platformChannel,
+      null,
+    );
+    debugDefaultTargetPlatformOverride = null;
   });
 
   test(
@@ -252,15 +270,15 @@ void main() {
   test('disposed', () async {
     await irisMethodChannel.initilize([]);
     await irisMethodChannel.dispose();
-    final callRecord1 = messenger.callApiRecords
-        .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
-    expect(callRecord1.length, 1);
-
-    // On web, we do not call the `destroyIrisEventHandler`
     if (!kIsWeb) {
-      final callRecord2 = messenger.callApiRecords
-          .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
-      expect(callRecord2.length, 1);
+      final callRecords = messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyNativeSession');
+      expect(callRecords.length, 1);
+      expect(jsonDecode(callRecords.single.apiParam.data), {'sessionId': 42});
+    } else {
+      final callRecords = messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
+      expect(callRecords.length, 1);
     }
   });
 
@@ -268,46 +286,209 @@ void main() {
     await irisMethodChannel.initilize([]);
     await irisMethodChannel.dispose();
     await irisMethodChannel.dispose();
-    final callRecord1 = messenger.callApiRecords
-        .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
-    expect(callRecord1.length, 1);
-
-    // On web, we do not call the `destroyIrisEventHandler`
     if (!kIsWeb) {
-      final callRecord2 = messenger.callApiRecords
-          .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
-      expect(callRecord2.length, 1);
+      final callRecords = messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyNativeSession');
+      expect(callRecords.length, 1);
+    } else {
+      final callRecords = messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
+      expect(callRecords.length, 1);
     }
   });
 
-  test('disposed after receive onDetachedFromEngine_fromPlatform', () async {
-    await irisMethodChannel.initilize([]);
+  test('Android serializes native session registration and disposal', () async {
+    if (kIsWeb) {
+      return;
+    }
 
-    // Simulate the `MethodChannel` call from native side
-    const StandardMethodCodec codec = StandardMethodCodec();
-    final ByteData data = codec.encodeMethodCall(const MethodCall(
-      'onDetachedFromEngine_fromPlatform',
-    ));
-    await binding.defaultBinaryMessenger.handlePlatformMessage(
-      'iris_method_channel',
-      data,
-      (ByteData? data) {},
+    final platformCalls = <MethodCall>[];
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      platformChannel,
+      (call) async {
+        platformCalls.add(call);
+        return handlePlatformCall(call);
+      },
     );
 
-    // Wait for the `iris_method_channel` method channel call completed.
-    await Future.delayed(const Duration(milliseconds: 1000));
+    try {
+      await irisMethodChannel.initilize([]);
+      await irisMethodChannel.dispose();
 
-    final callRecord1 = messenger.callApiRecords
-        .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
-    expect(callRecord1.length, 1);
-
-    // On web, we do not call the `destroyIrisEventHandler`
-    if (!kIsWeb) {
-      final callRecord2 = messenger.callApiRecords
-          .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
-      expect(callRecord2.length, 1);
+      expect(
+        platformCalls.map((call) => call.method),
+        [
+          'prepareInitialize',
+          'registerNativeSession',
+          'unregisterNativeSession',
+        ],
+      );
+      expect(platformCalls[1].arguments, {'sessionId': 42});
+      expect(platformCalls[2].arguments, {'sessionId': 42});
+    } finally {
+      binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        platformChannel,
+        handlePlatformCall,
+      );
+      debugDefaultTargetPlatformOverride = null;
     }
   });
+
+  test('non-Android platforms keep direct native resource ownership', () async {
+    if (kIsWeb) {
+      return;
+    }
+
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+
+    await irisMethodChannel.initilize([]);
+    expect(
+      messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'createNativeSession'),
+      isEmpty,
+    );
+
+    await irisMethodChannel.dispose();
+    expect(
+      messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine'),
+      hasLength(1),
+    );
+    expect(
+      messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler'),
+      hasLength(1),
+    );
+  });
+
+  test('Android initialization can retry after prepare fails', () async {
+    if (kIsWeb) {
+      return;
+    }
+
+    var prepareCalls = 0;
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      platformChannel,
+      (call) async {
+        if (call.method == 'prepareInitialize') {
+          prepareCalls++;
+          return prepareCalls > 1 ? 42 : 0;
+        }
+        return handlePlatformCall(call);
+      },
+    );
+
+    await expectLater(
+      irisMethodChannel.initilize([]),
+      throwsA(isA<StateError>()),
+    );
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.dispose();
+
+    expect(prepareCalls, 2);
+  });
+
+  test('Android registration failure destroys session and can retry', () async {
+    if (kIsWeb) {
+      return;
+    }
+
+    var registerCalls = 0;
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      platformChannel,
+      (call) async {
+        if (call.method == 'registerNativeSession' && registerCalls++ == 0) {
+          throw PlatformException(code: 'RegistrationFailed');
+        }
+        return handlePlatformCall(call);
+      },
+    );
+
+    await expectLater(
+      irisMethodChannel.initilize([]),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(
+      messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyNativeSession'),
+      hasLength(1),
+    );
+
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.dispose();
+    expect(
+      messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyNativeSession'),
+      hasLength(2),
+    );
+  });
+
+  test('Android initialization can retry after unregister fails', () async {
+    if (kIsWeb) {
+      return;
+    }
+
+    var unregisterCalls = 0;
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      platformChannel,
+      (call) async {
+        if (call.method == 'unregisterNativeSession' &&
+            unregisterCalls++ == 0) {
+          throw PlatformException(code: 'UnregistrationFailed');
+        }
+        return handlePlatformCall(call);
+      },
+    );
+
+    await irisMethodChannel.initilize([]);
+    await expectLater(
+      irisMethodChannel.dispose(),
+      throwsA(isA<PlatformException>()),
+    );
+
+    await irisMethodChannel.initilize([]);
+    await irisMethodChannel.dispose();
+    expect(unregisterCalls, 2);
+    expect(
+      messenger.callApiRecords
+          .where((e) => e.methodCall.funcName == 'destroyNativeSession'),
+      hasLength(2),
+    );
+  });
+
+  for (final methodName in <String>[
+    'onDetachedFromEngine_fromPlatform',
+    'onDetachedFromActivity_fromPlatform',
+  ]) {
+    test('disposed after receive $methodName', () async {
+      await irisMethodChannel.initilize([]);
+
+      // Simulate the `MethodChannel` call from native side.
+      const StandardMethodCodec codec = StandardMethodCodec();
+      final ByteData data = codec.encodeMethodCall(MethodCall(methodName));
+      await binding.defaultBinaryMessenger.handlePlatformMessage(
+        'iris_method_channel',
+        data,
+        (ByteData? data) {},
+      );
+
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      if (!kIsWeb) {
+        final callRecords = messenger.callApiRecords
+            .where((e) => e.methodCall.funcName == 'destroyNativeSession');
+        expect(callRecords.length, 1);
+      } else {
+        final callRecords = messenger.callApiRecords
+            .where((e) => e.methodCall.funcName == 'destroyNativeApiEngine');
+        expect(callRecords.length, 1);
+      }
+    });
+  }
 
   test('invokeMethod after disposed', () async {
     await irisMethodChannel.initilize([]);

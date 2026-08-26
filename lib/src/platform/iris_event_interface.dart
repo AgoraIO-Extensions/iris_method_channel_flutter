@@ -55,3 +55,23 @@ IrisEventMessage parseMessage(dynamic message) {
 typedef IrisEventMessageListener = void Function(IrisEventMessage message);
 
 abstract class IrisEvent {}
+
+/// Owns all native resources created for one Android Iris session.
+abstract class NativeSessionLifecycle {
+  int createNativeSession({
+    required int nativeSessionId,
+    required int irisApiEngineAddress,
+    required int irisEventHandlerAddress,
+    required int irisCEventHandlerAddress,
+    required int destroyNativeApiEngineAddress,
+    required int destroyIrisEventHandlerAddress,
+  });
+
+  bool acquireNativeSession(int sessionId);
+
+  void releaseNativeSession(int sessionId);
+
+  void destroyNativeSession(int sessionId);
+
+  void forceDestroyNativeSession(int sessionId);
+}

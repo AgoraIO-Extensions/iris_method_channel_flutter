@@ -54,7 +54,9 @@ class IrisMethodCall {
   final List<BufferParam>? rawBufferParams;
 }
 
-abstract class InitilizationResult {}
+abstract class InitilizationResult {
+  int get nativeSessionId => 0;
+}
 
 abstract class Request {}
 
@@ -117,7 +119,10 @@ abstract class InitilizationArgProvider {
 }
 
 abstract class IrisMethodChannelInternal {
-  Future<InitilizationResult?> initilize(List<InitilizationArgProvider> args);
+  Future<InitilizationResult?> initilize(
+    List<InitilizationArgProvider> args, {
+    int nativeSessionId = 0,
+  });
 
   // Future<CallApiResult> invokeMethod(IrisMethodCall methodCall);
 

@@ -9,7 +9,10 @@ import 'package:flutter/foundation.dart'
         FlutterError,
         FlutterErrorDetails,
         ErrorDescription,
-        kDebugMode;
+        defaultTargetPlatform,
+        kDebugMode,
+        kIsWeb,
+        TargetPlatform;
 import 'package:flutter/services.dart' show MethodChannel;
 import 'package:iris_method_channel/iris_method_channel.dart';
 import 'package:iris_method_channel/src/platform/iris_method_channel_internal.dart';
@@ -39,6 +42,7 @@ class IrisMethodChannel {
   final MethodChannel _channel = const MethodChannel('iris_method_channel');
 
   bool _initilized = false;
+  int _nativeSessionId = 0;
   @visibleForTesting
   final ScopedObjects scopedEventHandlers = ScopedObjects();
 
@@ -46,10 +50,10 @@ class IrisMethodChannel {
 
   void _setuponDetachedFromEngineListener() {
     _channel.setMethodCallHandler((call) async {
-      if (call.method == 'onDetachedFromEngine_fromPlatform') {
-        debugPrint(
-            'Receive the onDetachedFromEngine callback, clean the native resources.');
-        dispose();
+      if (call.method == 'onDetachedFromEngine_fromPlatform' ||
+          call.method == 'onDetachedFromActivity_fromPlatform') {
+        debugPrint('Receive lifecycle cleanup callback, clean native resources.');
+        await dispose();
         return true;
       }
 
@@ -65,58 +69,96 @@ class IrisMethodChannel {
 
     InitilizationResult? initilizationResult;
     _initializeCallOnce ??= AsyncMemoizer();
-    await _initializeCallOnce!.runOnce(() async {
-      _setuponDetachedFromEngineListener();
+    try {
+      await _initializeCallOnce!.runOnce(() async {
+        _setuponDetachedFromEngineListener();
 
-      initilizationResult = await _irisMethodChannelInternal.initilize(args);
+        final reservedSessionId = await _prepareNativeSessionInitialization();
 
-      _irisMethodChannelInternal.setIrisEventMessageListener((eventMessage) {
         try {
-          bool handled = false;
-          for (final sub in scopedEventHandlers.values) {
-            final scopedObjects = sub as DisposableScopedObjects;
-            for (final es in scopedObjects.values) {
-              final EventHandlerHolder eh = es as EventHandlerHolder;
-              // We need the event handlers with the same _EventHandlerHolderKey consume the message.
-              final handlersSnapshot = eh.getEventHandlers();
+          initilizationResult = await _irisMethodChannelInternal.initilize(
+            args,
+            nativeSessionId: reservedSessionId,
+          );
 
-              for (final e in handlersSnapshot.toList()) {
-                if (!eh.getEventHandlers().contains(e)) {
-                  continue;
+          final nativeSessionId = initilizationResult?.nativeSessionId ?? 0;
+          if (nativeSessionId == 0 && reservedSessionId != 0) {
+            await _unregisterNativeSession(reservedSessionId);
+          } else if (nativeSessionId != 0) {
+            try {
+              if (nativeSessionId != reservedSessionId) {
+                throw StateError(
+                    'Android native session reservation did not match.');
+              }
+              await _registerNativeSession(nativeSessionId);
+            } catch (_) {
+              await _irisMethodChannelInternal.dispose();
+              rethrow;
+            }
+            _nativeSessionId = nativeSessionId;
+          }
+        } catch (_) {
+          try {
+            if (reservedSessionId != 0 && _nativeSessionId == 0) {
+              await _unregisterNativeSession(reservedSessionId);
+            }
+          } catch (_) {
+            // Preserve the initialization error; Java retries cleanup later.
+          }
+          rethrow;
+        }
+
+        _irisMethodChannelInternal.setIrisEventMessageListener((eventMessage) {
+          try {
+            bool handled = false;
+            for (final sub in scopedEventHandlers.values) {
+              final scopedObjects = sub as DisposableScopedObjects;
+              for (final es in scopedObjects.values) {
+                final EventHandlerHolder eh = es as EventHandlerHolder;
+                // We need the event handlers with the same _EventHandlerHolderKey consume the message.
+                final handlersSnapshot = eh.getEventHandlers();
+
+                for (final e in handlersSnapshot.toList()) {
+                  if (!eh.getEventHandlers().contains(e)) {
+                    continue;
+                  }
+                  if (e.handleEvent(eventMessage.event, eventMessage.data,
+                      eventMessage.buffers)) {
+                    handled = true;
+                  }
                 }
-                if (e.handleEvent(eventMessage.event, eventMessage.data,
-                    eventMessage.buffers)) {
-                  handled = true;
+
+                // Break the loop after the event handlers in the same EventHandlerHolder
+                // consume the message.
+                if (handled) {
+                  break;
                 }
               }
 
-              // Break the loop after the event handlers in the same EventHandlerHolder
-              // consume the message.
+              // Break the loop if there is an EventHandlerHolder consume the message.
               if (handled) {
                 break;
               }
             }
-
-            // Break the loop if there is an EventHandlerHolder consume the message.
-            if (handled) {
-              break;
+          } catch (e, s) {
+            FlutterError.reportError(FlutterErrorDetails(
+              exception: e,
+              stack: s,
+              library: 'iris_method_channel',
+              context: ErrorDescription('IrisMethodChannel handleEvent'),
+            ));
+            if (kDebugMode) {
+              rethrow;
             }
           }
-        } catch (e, s) {
-          FlutterError.reportError(FlutterErrorDetails(
-            exception: e,
-            stack: s,
-            library: 'iris_method_channel',
-            context: ErrorDescription('IrisMethodChannel handleEvent'),
-          ));
-          if (kDebugMode) {
-            rethrow;
-          }
-        }
-      });
+        });
 
-      _initilized = true;
-    });
+        _initilized = true;
+      });
+    } catch (_) {
+      _initializeCallOnce = null;
+      rethrow;
+    }
 
     return initilizationResult;
   }
@@ -151,13 +193,74 @@ class IrisMethodChannel {
   }
 
   Future<void> dispose() async {
-    if (!_initilized) {
+    if (!_initilized && _nativeSessionId == 0) {
+      _initializeCallOnce = null;
       return;
     }
     _initilized = false;
 
-    await _irisMethodChannelInternal.dispose();
-    _initializeCallOnce = null;
+    final nativeSessionId = _nativeSessionId;
+    Object? firstError;
+    StackTrace? firstStackTrace;
+    try {
+      await _irisMethodChannelInternal.dispose();
+    } catch (e, s) {
+      firstError = e;
+      firstStackTrace = s;
+    }
+    try {
+      if (nativeSessionId != 0) {
+        await _unregisterNativeSession(nativeSessionId);
+      }
+    } catch (e, s) {
+      firstError ??= e;
+      firstStackTrace ??= s;
+    } finally {
+      _nativeSessionId = 0;
+      _initializeCallOnce = null;
+    }
+
+    if (firstError != null) {
+      await Future<void>.error(firstError, firstStackTrace);
+    }
+  }
+
+  bool get _usesAndroidNativeSessions =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  Future<int> _prepareNativeSessionInitialization() async {
+    if (!_usesAndroidNativeSessions) {
+      return 0;
+    }
+
+    final nativeSessionId =
+        await _channel.invokeMethod<int>('prepareInitialize') ?? 0;
+    if (nativeSessionId == 0) {
+      throw StateError('Android native session cleanup did not complete.');
+    }
+    return nativeSessionId;
+  }
+
+  Future<void> _registerNativeSession(int sessionId) async {
+    if (!_usesAndroidNativeSessions) {
+      return;
+    }
+
+    await _channel.invokeMethod<void>(
+      'registerNativeSession',
+      {'sessionId': sessionId},
+    );
+  }
+
+  Future<void> _unregisterNativeSession(int sessionId) async {
+    if (!_usesAndroidNativeSessions) {
+      return;
+    }
+
+    await _channel.invokeMethod<void>(
+      'unregisterNativeSession',
+      {'sessionId': sessionId},
+    );
   }
 
   Future<CallApiResult> registerEventHandler(

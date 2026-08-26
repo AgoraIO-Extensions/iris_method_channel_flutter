@@ -49,9 +49,16 @@ class _Messenger implements DisposableObject {
     }
     _isDisposed = true;
     requestPort.send(null);
-    // Wait for `executor.dispose` done in isolate.
-    await responseQueue.next;
-    responseQueue.cancel();
+    try {
+      // Wait for `executor.dispose` done in isolate.
+      final response = await responseQueue.next;
+      if (response is _DisposeFailure) {
+        throw StateError(
+            'Native Iris disposal failed: ${response.error}\n${response.stackTrace}');
+      }
+    } finally {
+      await responseQueue.cancel();
+    }
   }
 }
 
@@ -62,6 +69,7 @@ class _InitilizationArgs {
     this.onExitSendPort,
     this.provider,
     this.argNativeHandles,
+    this.nativeSessionId,
   );
 
   final SendPort apiCallPortSendPort;
@@ -69,12 +77,28 @@ class _InitilizationArgs {
   final SendPort? onExitSendPort;
   final PlatformBindingsProvider provider;
   final List<InitilizationArgProvider> argNativeHandles;
+  final int nativeSessionId;
+}
+
+class _InitilizationFailure {
+  const _InitilizationFailure(this.error, this.stackTrace);
+
+  final String error;
+  final String stackTrace;
+}
+
+class _DisposeFailure {
+  const _DisposeFailure(this.error, this.stackTrace);
+
+  final String error;
+  final String stackTrace;
 }
 
 class InitilizationResultIO implements InitilizationResult {
   InitilizationResultIO(
     this._apiCallPortSendPort,
     this.irisApiEngineNativeHandle,
+    this.nativeSessionId,
     this.extraData,
     this._debugIrisCEventHandlerNativeHandle,
     this._debugIrisEventHandlerNativeHandle,
@@ -82,6 +106,9 @@ class InitilizationResultIO implements InitilizationResult {
 
   final SendPort _apiCallPortSendPort;
   final int irisApiEngineNativeHandle;
+
+  @override
+  final int nativeSessionId;
 
   /// Same as [CreateApiEngineResult.extraData]
   final Map<String, Object> extraData;
@@ -92,12 +119,8 @@ class InitilizationResultIO implements InitilizationResult {
 
 class _HotRestartFinalizer {
   _HotRestartFinalizer(this.provider) {
-    assert(() {
-      _onExitPort = ReceivePort();
-      _onExitSubscription = _onExitPort?.listen(_finalize);
-
-      return true;
-    }());
+    _onExitPort = ReceivePort();
+    _onExitSubscription = _onExitPort?.listen(_finalize);
   }
 
   final PlatformBindingsProvider provider;
@@ -110,6 +133,18 @@ class _HotRestartFinalizer {
   SendPort? get onExitSendPort => _onExitPort?.sendPort;
 
   bool _isFinalize = false;
+
+  void _closeOnExitPort() {
+    _onExitSubscription?.cancel();
+    _onExitSubscription = null;
+    _onExitPort?.close();
+    _onExitPort = null;
+  }
+
+  int _nativeSessionId = 0;
+  set nativeSessionId(int value) {
+    _nativeSessionId = value;
+  }
 
   int? _debugIrisApiEngineNativeHandle;
   set debugIrisApiEngineNativeHandle(int value) {
@@ -137,34 +172,60 @@ class _HotRestartFinalizer {
     // is called normally, which will call the `Isolate.exit(onExitSendPort, 0)`
     // to send a value of `0` as a exit response. See `_execute` function for more detail.
     if (msg != null && msg == 0) {
+      _closeOnExitPort();
       return;
     }
 
     for (final listener in _hotRestartListeners.reversed) {
-      listener(msg);
+      try {
+        listener(msg);
+      } catch (e, s) {
+        debugPrint('HotRestartListener failed: $e\n$s');
+      }
+    }
+
+    final sessionIrisEvent = provider.provideIrisEvent();
+    if (_nativeSessionId != 0 && sessionIrisEvent is NativeSessionLifecycle) {
+      try {
+        // ignore: cast_nullable_to_non_nullable
+        (sessionIrisEvent as NativeSessionLifecycle)
+            .forceDestroyNativeSession(_nativeSessionId);
+      } finally {
+        _closeOnExitPort();
+      }
+      return;
+    }
+
+    if (_debugIrisApiEngineNativeHandle == null ||
+        _debugIrisEventHandlerNativeHandle == null ||
+        _debugIrisCEventHandlerNativeHandle == null) {
+      _closeOnExitPort();
+      return;
     }
 
     // When hot restart happen, the `IrisMethodChannel.dispose` function will not
     // be called normally, cause the native API engine can not be destroy correctly,
     // so we need to release the native resources which create by the
     // `NativeBindingDelegate` explicitly.
-    final nativeBindingDelegate = provider.provideNativeBindingDelegate();
-    nativeBindingDelegate.initialize();
+    try {
+      final nativeBindingDelegate = provider.provideNativeBindingDelegate();
+      nativeBindingDelegate.initialize();
 
-    nativeBindingDelegate.destroyNativeApiEngine(IrisApiEngineHandle(
-        ffi.Pointer<ffi.Void>.fromAddress(_debugIrisApiEngineNativeHandle!)));
+      nativeBindingDelegate.destroyNativeApiEngine(IrisApiEngineHandle(
+          ffi.Pointer<ffi.Void>.fromAddress(_debugIrisApiEngineNativeHandle!)));
 
-    calloc.free(ffi.Pointer<ffi.Void>.fromAddress(
-        _debugIrisCEventHandlerNativeHandle!));
-    nativeBindingDelegate.destroyIrisEventHandler(IrisEventHandlerHandle(
-        ffi.Pointer<ffi.Void>.fromAddress(
-            _debugIrisEventHandlerNativeHandle!)));
+      nativeBindingDelegate.destroyIrisEventHandler(IrisEventHandlerHandle(
+          ffi.Pointer<ffi.Void>.fromAddress(
+              _debugIrisEventHandlerNativeHandle!)));
+      calloc.free(ffi.Pointer<ffi.Void>.fromAddress(
+          _debugIrisCEventHandlerNativeHandle!));
 
-    final irisEvent =
-        (provider.provideIrisEvent() ?? IrisEventIO()) as IrisEventIO;
-    irisEvent.dispose();
-
-    _onExitSubscription?.cancel();
+      final irisEvent =
+          (provider.provideIrisEvent() ?? IrisEventIO()) as IrisEventIO;
+      irisEvent.dispose();
+    } finally {
+      _closeOnExitPort();
+    }
   }
 
   VoidCallback addHotRestartListener(HotRestartListener listener) {
@@ -317,30 +378,123 @@ class _IrisMethodChannelNative {
     return _irisEventHandler!.address;
   }
 
-  CreateApiEngineResult initilize(
-      SendPort sendPort, List<InitilizationArgProvider> args) {
-    _irisEvent.initialize();
-    _irisEvent.registerEventHandler(sendPort);
+  int _nativeSessionId = 0;
+  int get nativeSessionId => _nativeSessionId;
+  SendPort? _eventSendPort;
+  bool _irisEventInitialized = false;
+  bool _eventHandlerRegistered = false;
 
-    _nativeIrisApiEngineBinding.initialize();
-    final createResult = _nativeIrisApiEngineBinding.createApiEngine(args);
-    _irisApiEnginePtr = createResult.apiEnginePtr() as ffi.Pointer<ffi.Void>?;
+  CreateApiEngineResult initilize(SendPort sendPort,
+      List<InitilizationArgProvider> args, int requestedNativeSessionId) {
+    _eventSendPort = sendPort;
+    try {
+      _irisEvent.initialize();
+      _irisEventInitialized = true;
+      _irisEvent.registerEventHandler(sendPort);
+      _eventHandlerRegistered = true;
 
-    _irisCEventHandler = calloc<iris.IrisCEventHandler>()
-      ..ref.OnEvent = _irisEvent.onEventPtr.cast();
+      _nativeIrisApiEngineBinding.initialize();
+      final createResult = _nativeIrisApiEngineBinding.createApiEngine(args);
+      _irisApiEnginePtr = createResult.apiEnginePtr() as ffi.Pointer<ffi.Void>?;
+      if (_irisApiEnginePtr == null || _irisApiEnginePtr == ffi.nullptr) {
+        throw StateError('Failed to create the native Iris API engine.');
+      }
 
-    _irisEventHandler = _nativeIrisApiEngineBinding.createIrisEventHandler(
-            IrisCEventHandlerHandle(_irisCEventHandler!))()
-        as ffi.Pointer<ffi.Void>?;
+      _irisCEventHandler = calloc<iris.IrisCEventHandler>()
+        ..ref.OnEvent = _irisEvent.onEventPtr.cast();
 
-    return createResult;
+      _irisEventHandler = _nativeIrisApiEngineBinding.createIrisEventHandler(
+              IrisCEventHandlerHandle(_irisCEventHandler!))()
+          as ffi.Pointer<ffi.Void>?;
+      if (_irisEventHandler == null || _irisEventHandler == ffi.nullptr) {
+        throw StateError('Failed to create the native Iris event handler.');
+      }
+
+      final nativeBinding = _nativeIrisApiEngineBinding;
+      if (requestedNativeSessionId != 0 &&
+          nativeBinding is NativeCleanupCallbackProvider) {
+        final cleanupCallbacks = nativeBinding as NativeCleanupCallbackProvider;
+        _nativeSessionId = _irisEvent.createNativeSession(
+          nativeSessionId: requestedNativeSessionId,
+          irisApiEngineAddress: _irisApiEnginePtr!.address,
+          irisEventHandlerAddress: _irisEventHandler!.address,
+          irisCEventHandlerAddress: _irisCEventHandler!.address,
+          destroyNativeApiEngineAddress:
+              cleanupCallbacks.destroyNativeApiEngineAddress,
+          destroyIrisEventHandlerAddress:
+              cleanupCallbacks.destroyIrisEventHandlerAddress,
+        );
+        if (_nativeSessionId == 0) {
+          throw StateError(
+              'Failed to attach the reserved native Iris session.');
+        }
+      }
+
+      return createResult;
+    } catch (_) {
+      _disposeDirectNativeResources();
+      rethrow;
+    }
+  }
+
+  void _disposeDirectNativeResources() {
+    final eventSendPort = _eventSendPort;
+    if (_eventHandlerRegistered && eventSendPort != null) {
+      try {
+        _irisEvent.unregisterEventHandler(eventSendPort);
+      } catch (e) {
+        debugPrint('Failed to unregister Iris Dart port: $e');
+      }
+      _eventHandlerRegistered = false;
+    }
+
+    final apiEnginePtr = _irisApiEnginePtr;
+    if (apiEnginePtr != null && apiEnginePtr != ffi.nullptr) {
+      _nativeIrisApiEngineBinding
+          .destroyNativeApiEngine(IrisApiEngineHandle(apiEnginePtr));
+      _irisApiEnginePtr = null;
+    }
+
+    final irisEventHandler = _irisEventHandler;
+    if (irisEventHandler != null && irisEventHandler != ffi.nullptr) {
+      _nativeIrisApiEngineBinding
+          .destroyIrisEventHandler(IrisEventHandlerHandle(irisEventHandler));
+      _irisEventHandler = null;
+    }
+
+    final irisCEventHandler = _irisCEventHandler;
+    if (irisCEventHandler != null) {
+      calloc.free(irisCEventHandler);
+      _irisCEventHandler = null;
+    }
+
+    if (_irisEventInitialized) {
+      _irisEvent.dispose();
+      _irisEventInitialized = false;
+    }
+    _eventSendPort = null;
   }
 
   CallApiResult _invokeMethod(IrisMethodCall methodCall) {
     assert(_irisApiEnginePtr != null, 'Make sure initilize() has been called.');
 
-    return _nativeIrisApiEngineBinding.invokeMethod(
-        IrisApiEngineHandle(_irisApiEnginePtr!), methodCall);
+    final nativeSessionId = _nativeSessionId;
+    if (nativeSessionId != 0 &&
+        !_irisEvent.acquireNativeSession(nativeSessionId)) {
+      return CallApiResult(
+        irisReturnCode: kDisposedIrisMethodCallReturnCode,
+        data: kDisposedIrisMethodCallData,
+      );
+    }
+
+    try {
+      return _nativeIrisApiEngineBinding.invokeMethod(
+          IrisApiEngineHandle(_irisApiEnginePtr!), methodCall);
+    } finally {
+      if (nativeSessionId != 0) {
+        _irisEvent.releaseNativeSession(nativeSessionId);
+      }
+    }
   }
 
   CallApiResult invokeMethod(IrisMethodCall methodCall) {
@@ -350,18 +504,18 @@ class _IrisMethodChannelNative {
   void dispose() {
     assert(_irisApiEnginePtr != null);
 
-    _nativeIrisApiEngineBinding
-        .destroyNativeApiEngine(IrisApiEngineHandle(_irisApiEnginePtr!));
-    _irisApiEnginePtr = null;
-
-    _irisEvent.dispose();
-
-    _nativeIrisApiEngineBinding
-        .destroyIrisEventHandler(IrisEventHandlerHandle(_irisEventHandler!));
-    _irisEventHandler = null;
-
-    calloc.free(_irisCEventHandler!);
-    _irisCEventHandler = null;
+    if (_nativeSessionId != 0) {
+      _irisEvent.destroyNativeSession(_nativeSessionId);
+      _nativeSessionId = 0;
+      _irisApiEnginePtr = null;
+      _irisEventHandler = null;
+      _irisCEventHandler = null;
+      _eventHandlerRegistered = false;
+      _irisEventInitialized = false;
+      _eventSendPort = null;
+      return;
+    }
+    _disposeDirectNativeResources();
   }
 
   CallApiResult createNativeEventHandler(IrisMethodCall methodCall) {
@@ -427,8 +581,14 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
 
     final _IrisMethodChannelNative executor = _IrisMethodChannelNative(
         nativeBindingDelegate, irisEvent as IrisEventIO);
-    final CreateApiEngineResult executorInitilizationResult =
-        executor.initilize(mainEventSendPort, args.argNativeHandles);
+    late CreateApiEngineResult executorInitilizationResult;
+    try {
+      executorInitilizationResult = executor.initilize(
+          mainEventSendPort, args.argNativeHandles, args.nativeSessionId);
+    } catch (e, s) {
+      mainApiCallSendPort.send(_InitilizationFailure('$e', '$s'));
+      Isolate.exit(onExitSendPort, 0);
+    }
 
     int? debugIrisCEventHandlerNativeHandle;
     int? debugIrisEventHandlerNativeHandle;
@@ -444,6 +604,7 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
     final InitilizationResult initilizationResponse = InitilizationResultIO(
       apiCallPort.sendPort,
       executor.irisApiEngineNativeHandle,
+      executor.nativeSessionId,
       executorInitilizationResult.extraData,
       debugIrisCEventHandlerNativeHandle,
       debugIrisEventHandlerNativeHandle,
@@ -451,11 +612,17 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
 
     mainApiCallSendPort.send(initilizationResponse);
 
+    var exitCode = 0;
     // Wait for messages from the main isolate.
     await for (final request in apiCallPort) {
       if (request == null) {
-        executor.dispose();
-        mainApiCallSendPort.send(null);
+        try {
+          executor.dispose();
+          mainApiCallSendPort.send(null);
+        } catch (e, s) {
+          exitCode = 1;
+          mainApiCallSendPort.send(_DisposeFailure('$e', '$s'));
+        }
         // Ready exit the isolate.
         break;
       }
@@ -499,69 +666,85 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
       }
     }
 
-    Isolate.exit(onExitSendPort, 0);
+    Isolate.exit(onExitSendPort, exitCode);
   }
 
   @override
   Future<InitilizationResult?> initilize(
-      List<InitilizationArgProvider> args) async {
+    List<InitilizationArgProvider> args, {
+    int nativeSessionId = 0,
+  }) async {
     if (_initilized) {
       return null;
     }
 
     late InitilizationResultIO initilizationResult;
     _initializeCallOnce ??= AsyncMemoizer();
-    await _initializeCallOnce!.runOnce(() async {
-      final apiCallPort = ReceivePort();
-      final eventPort = ReceivePort();
+    try {
+      await _initializeCallOnce!.runOnce(() async {
+        final apiCallPort = ReceivePort();
+        final eventPort = ReceivePort();
 
-      _hotRestartFinalizer = _HotRestartFinalizer(_nativeBindingsProvider);
+        _hotRestartFinalizer = _HotRestartFinalizer(_nativeBindingsProvider);
 
-      workerIsolate = await Isolate.spawn(
-        _execute,
-        _InitilizationArgs(
-          apiCallPort.sendPort,
-          eventPort.sendPort,
-          _hotRestartFinalizer.onExitSendPort,
-          _nativeBindingsProvider,
-          args,
-        ),
-        onExit: _hotRestartFinalizer.onExitSendPort,
-      );
+        workerIsolate = await Isolate.spawn(
+          _execute,
+          _InitilizationArgs(
+            apiCallPort.sendPort,
+            eventPort.sendPort,
+            _hotRestartFinalizer.onExitSendPort,
+            _nativeBindingsProvider,
+            args,
+            nativeSessionId,
+          ),
+          onExit: _hotRestartFinalizer.onExitSendPort,
+        );
 
-      final responseQueue = StreamQueue<dynamic>(apiCallPort);
+        final responseQueue = StreamQueue<dynamic>(apiCallPort);
 
-      final msg = await responseQueue.next;
-      assert(msg is InitilizationResult);
-      initilizationResult = msg as InitilizationResultIO;
-      final requestPort = initilizationResult._apiCallPortSendPort;
-      _nativeHandle = initilizationResult.irisApiEngineNativeHandle;
-
-      assert(() {
-        _hotRestartFinalizer.debugIrisApiEngineNativeHandle =
-            initilizationResult.irisApiEngineNativeHandle;
-        _hotRestartFinalizer.debugIrisCEventHandlerNativeHandle =
-            initilizationResult._debugIrisCEventHandlerNativeHandle;
-        _hotRestartFinalizer.debugIrisEventHandlerNativeHandle =
-            initilizationResult._debugIrisEventHandlerNativeHandle;
-
-        return true;
-      }());
-
-      _messenger = _Messenger(requestPort, responseQueue);
-
-      _evntSubscription = eventPort.listen((message) {
-        if (!_initilized) {
-          return;
+        final msg = await responseQueue.next;
+        if (msg is _InitilizationFailure) {
+          await responseQueue.cancel();
+          eventPort.close();
+          throw StateError(
+              'Native Iris initialization failed: ${msg.error}\n${msg.stackTrace}');
         }
+        assert(msg is InitilizationResult);
+        initilizationResult = msg as InitilizationResultIO;
+        final requestPort = initilizationResult._apiCallPortSendPort;
+        _nativeHandle = initilizationResult.irisApiEngineNativeHandle;
+        _hotRestartFinalizer.nativeSessionId =
+            initilizationResult.nativeSessionId;
 
-        final eventMessage = parseMessage(message);
+        assert(() {
+          _hotRestartFinalizer.debugIrisApiEngineNativeHandle =
+              initilizationResult.irisApiEngineNativeHandle;
+          _hotRestartFinalizer.debugIrisCEventHandlerNativeHandle =
+              initilizationResult._debugIrisCEventHandlerNativeHandle;
+          _hotRestartFinalizer.debugIrisEventHandlerNativeHandle =
+              initilizationResult._debugIrisEventHandlerNativeHandle;
 
-        _irisEventMessageListener?.call(eventMessage);
+          return true;
+        }());
+
+        _messenger = _Messenger(requestPort, responseQueue);
+
+        _evntSubscription = eventPort.listen((message) {
+          if (!_initilized) {
+            return;
+          }
+
+          final eventMessage = parseMessage(message);
+
+          _irisEventMessageListener?.call(eventMessage);
+        });
+
+        _initilized = true;
       });
-
-      _initilized = true;
-    });
+    } catch (_) {
+      _initializeCallOnce = null;
+      rethrow;
+    }
 
     return initilizationResult;
   }
@@ -569,14 +752,33 @@ class IrisMethodChannelInternalIO implements IrisMethodChannelInternal {
   @override
   Future<void> dispose() async {
     if (!_initilized) {
+      _initializeCallOnce = null;
       return;
     }
     _initilized = false;
     _irisEventMessageListener = null;
     _hotRestartFinalizer.dispose();
-    await _evntSubscription.cancel();
-    await _messenger.dispose();
-    _initializeCallOnce = null;
+
+    Object? firstError;
+    StackTrace? firstStackTrace;
+    try {
+      await _evntSubscription.cancel();
+    } catch (e, s) {
+      firstError = e;
+      firstStackTrace = s;
+    }
+    try {
+      await _messenger.dispose();
+    } catch (e, s) {
+      firstError ??= e;
+      firstStackTrace ??= s;
+    } finally {
+      _initializeCallOnce = null;
+    }
+
+    if (firstError != null) {
+      await Future<void>.error(firstError, firstStackTrace);
+    }
   }
 
   @override
