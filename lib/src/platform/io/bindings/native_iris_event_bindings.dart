@@ -176,7 +176,7 @@ class _SymbolAddresses {
               ffi.Uint32)>> get OnEventExLegacy => _library._OnEventExLegacyPtr;
 }
 
-class EventParam extends ffi.Struct {
+final class EventParam extends ffi.Struct {
   external ffi.Pointer<ffi.Int8> event;
 
   external ffi.Pointer<ffi.Int8> data;

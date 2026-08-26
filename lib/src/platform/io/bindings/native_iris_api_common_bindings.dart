@@ -2,7 +2,7 @@
 
 import 'dart:ffi' as ffi;
 
-class ApiParam extends ffi.Struct {
+final class ApiParam extends ffi.Struct {
   external ffi.Pointer<ffi.Int8> event;
 
   external ffi.Pointer<ffi.Int8> data;
@@ -22,14 +22,14 @@ class ApiParam extends ffi.Struct {
 
 // typedef IrisEventHandlerHandle = ffi.Pointer<ffi.Void>;
 
-class IrisCEventHandler extends ffi.Struct {
+final class IrisCEventHandler extends ffi.Struct {
   external Func_Event OnEvent;
 }
 
 typedef Func_Event = ffi
     .Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<EventParam>)>>;
 
-class EventParam extends ffi.Struct {
+final class EventParam extends ffi.Struct {
   external ffi.Pointer<ffi.Int8> event;
 
   external ffi.Pointer<ffi.Int8> data;
