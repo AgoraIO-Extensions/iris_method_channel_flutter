@@ -29,29 +29,29 @@ class ObjectIrisHandle extends IrisHandle {
 /// The [IrisHandle] of the iris's `IrisApiEngine`
 class IrisApiEngineHandle extends ObjectIrisHandle {
   /// Construct the [IrisApiEngineHandle]
-  const IrisApiEngineHandle(Object h) : super(h);
+  const IrisApiEngineHandle(super.h);
 }
 
 /// The [IrisHandle] of the iris's `ApiParam`
 class IrisApiParamHandle extends ObjectIrisHandle {
   /// Construct the [IrisApiParamHandle]
-  const IrisApiParamHandle(Object h) : super(h);
+  const IrisApiParamHandle(super.h);
 }
 
 /// The [IrisHandle] of the iris's `IrisCEventHandler`
 class IrisCEventHandlerHandle extends ObjectIrisHandle {
   /// Construct the [IrisCEventHandlerHandle]
-  const IrisCEventHandlerHandle(Object h) : super(h);
+  const IrisCEventHandlerHandle(super.h);
 }
 
 /// The [IrisHandle] of the iris's `IrisEventHandler`
 class IrisEventHandlerHandle extends ObjectIrisHandle {
   /// Construct the [IrisEventHandlerHandle]
-  const IrisEventHandlerHandle(Object h) : super(h);
+  const IrisEventHandlerHandle(super.h);
 }
 
 /// The [IrisHandle] of the `BufferParam`
 class BufferParamHandle extends ObjectIrisHandle {
   /// Construct the [BufferParamHandle]
-  const BufferParamHandle(Object h) : super(h);
+  const BufferParamHandle(super.h);
 }

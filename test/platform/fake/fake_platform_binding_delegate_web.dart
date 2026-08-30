@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:js' as js;
 
 import 'package:iris_method_channel/iris_method_channel.dart';
 
@@ -50,7 +49,7 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
     );
     messenger.addCallApiRecord(record);
 
-    return IrisEventHandlerHandle(FakeTypeWeb());
+    return const IrisEventHandlerHandle(123456);
   }
 
   @override
@@ -63,6 +62,15 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
         CallApiRecordApiParam(
           'createApiEngine',
           jsonEncode({'args': value}),
+        ),
+      );
+      messenger.addCallApiRecord(record);
+    } else {
+      final record = CallApiRecord(
+        const IrisMethodCall('createApiEngine', '{}'),
+        CallApiRecordApiParam(
+          'createApiEngine',
+          '{}',
         ),
       );
       messenger.addCallApiRecord(record);
@@ -123,7 +131,7 @@ class FakeNativeBindingDelegate extends PlatformBindingsDelegateInterface {
     );
     messenger.addCallApiRecord(record);
 
-    return CallApiResult(irisReturnCode: 0, data: {});
+    return CallApiResult(irisReturnCode: 0, data: const {});
   }
 }
 
@@ -148,12 +156,8 @@ class FakeNativeBindingDelegateProvider extends PlatformBindingsProvider {
   }
 }
 
-class EventParamFake {}
-
 class PlatformTesterInterfaceWeb implements PlatformTesterInterface {
   PlatformTesterInterfaceWeb() {
-    js.context['EventParam'] = EventParamFake();
-
     messenger = _FakeNativeBindingDelegateMessenger();
     final FakeNativeBindingDelegate nativeBindingDelegate =
         FakeNativeBindingDelegate(messenger);
