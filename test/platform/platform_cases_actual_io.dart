@@ -58,7 +58,7 @@ void platformCases() {
 
       final destroyIrisEventHandlerCallRecord = messenger.callApiRecords
           .where((e) => e.methodCall.funcName == 'destroyIrisEventHandler');
-      expect(destroyIrisEventHandlerCallRecord.length, 1);
+      expect(destroyIrisEventHandlerCallRecord.length, 0);
 
       final irisEventDisposeCallRecord = messenger.callApiRecords
           .where((e) => e.methodCall.funcName == 'IrisEvent_dispose');

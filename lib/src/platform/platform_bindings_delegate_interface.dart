@@ -39,6 +39,10 @@ abstract class PlatformBindingsDelegateInterface {
   );
 
   void destroyNativeApiEngine(IrisApiEngineHandle apiEnginePtr);
+
+  void destroyNativeApiEngineAndRtcEngine(IrisApiEngineHandle apiEnginePtr) {
+    destroyNativeApiEngine(apiEnginePtr);
+  }
 }
 
 /// Provider class that allow the user passing the custom implemetation of [PlatformBindingsDelegateInterface],

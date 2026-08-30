@@ -1,40 +1,64 @@
-@JS()
-library iris_web;
+@JS('IrisCore')
+library;
 
 import 'dart:convert';
+import 'dart:js_interop';
 import 'dart:typed_data';
 
 import 'package:iris_method_channel/src/platform/iris_event_interface.dart';
 import 'package:iris_method_channel/src/platform/iris_method_channel_interface.dart';
-import 'package:js/js.dart';
 
 // ignore_for_file: public_member_api_docs, non_constant_identifier_names
 
-// NOTE:
-// For compatibility to dart sdk >= 2.12, we only use the feature that are
-// supported in `js: 0.6.3` at this time
-
-@JS('IrisCore.EventParam')
+@JS('EventParam')
 @anonymous
+@staticInterop
 class EventParam {
-  // Must have an unnamed factory constructor with named arguments.
-  external factory EventParam({
+  factory EventParam({
+    String event = '',
+    String data = '',
+    int data_size = 0,
+    String result = '',
+    List<Uint8List> buffer = const [],
+    List<int> length = const [],
+    int buffer_count = 0,
+  }) => EventParam._(
+    event: event,
+    data: data,
+    data_size: data_size,
+    result: result,
+    buffer: buffer.map((value) => value.toJS).toList().toJS,
+    length: length.map((value) => value.toJS).toList().toJS,
+    buffer_count: buffer_count,
+  );
+
+  external factory EventParam._({
     String event,
     String data,
     int data_size,
     String result,
-    List<Object> buffer,
-    List<int> length,
+    JSArray<JSUint8Array> buffer,
+    JSArray<JSNumber> length,
     int buffer_count,
   });
+}
 
+extension EventParamExt on EventParam {
   external String get event;
   external String get data;
   external int get data_size;
   external String get result;
-  external List<Object> get buffer;
-  external List<int> get length;
+  @JS('buffer')
+  external JSArray<JSUint8Array> get _buffer;
+  @JS('length')
+  external JSArray<JSNumber> get _length;
   external int get buffer_count;
+
+  List<Uint8List> get buffer =>
+      _buffer.toDart.map((value) => value.toDart).toList(growable: false);
+
+  List<int> get length =>
+      _length.toDart.map((value) => value.toDartInt).toList(growable: false);
 }
 
 IrisEventMessage toIrisEventMessage(EventParam param) {
@@ -44,14 +68,17 @@ IrisEventMessage toIrisEventMessage(EventParam param) {
 
 typedef ApiParam = EventParam;
 
-@JS('IrisCore.CallIrisApiResult')
+@JS('CallIrisApiResult')
 @anonymous
+@staticInterop
 class CallIrisApiResult {
   external factory CallIrisApiResult({
     int code,
     String data,
   });
+}
 
+extension CallIrisApiResultInteropExt on CallIrisApiResult {
   external int get code;
   external String get data;
 }
@@ -63,26 +90,26 @@ extension CallIrisApiResultExt on CallIrisApiResult {
   }
 }
 
-@JS('IrisCore.IrisEventHandler')
-@anonymous
+@JS('IrisEventHandler')
+@staticInterop
 class IrisEventHandler {}
 
-@JS('IrisCore.IrisApiEngine')
-@anonymous
+@JS('IrisApiEngine')
+@staticInterop
 class IrisApiEngine {}
 
-@JS('IrisCore.createIrisApiEngine')
+@JS('createIrisApiEngine')
 external IrisApiEngine createIrisApiEngine();
 
-@JS('IrisCore.disposeIrisApiEngine')
+@JS('disposeIrisApiEngine')
 external int disposeIrisApiEngine(IrisApiEngine engine_ptr);
 
-@JS('IrisCore.callIrisApi')
+@JS('callIrisApi')
 external int callIrisApi(IrisApiEngine engine_ptr, ApiParam apiParam);
 
 typedef IrisEventHandlerFuncJS = void Function(EventParam param);
-typedef IrisCEventHandler = IrisEventHandlerFuncJS;
+typedef IrisCEventHandler = JSExportedDartFunction;
 
-@JS('IrisCore.createIrisEventHandler')
+@JS('createIrisEventHandler')
 external IrisEventHandler createIrisEventHandler(
     IrisCEventHandler event_handler);
